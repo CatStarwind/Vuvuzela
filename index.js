@@ -25,7 +25,7 @@ vuvu.on('message', message => {
 	if(cmd === "odds"){
 		if(args[0] === "start"){
 			checkOdds(message.channel);
-			oddsInterval = setInterval(function(){checkOdds(message.channel)}, 30*1000);
+			oddsInterval = setInterval(function(){checkOdds(message.channel)}, 5*60*1000);
 		}
 
 		if(args[0] === "stop"){
@@ -44,7 +44,7 @@ vuvu.on('message', message => {
 		message.channel.send("Pong!");
 	}
 });
-
+var chirp = true;
 var parseOdd = function(odd){
 	return {"name": odd[0], "color": odd[1], "p": odd[2]}
 }
@@ -60,18 +60,23 @@ var checkOdds = function(ch){
 			console.log("Bad JSON");
 			return false;
 		}
-		var time = match[1][0][22];
+		var time = match[1][0][22][6];
 		var odds = match[7][0][2][27][10][1];
 		console.log(JSON.stringify(match[7][0][2]));
-		console.log(time);
+		console.log(match[1][0][22]);
 		console.log(odds);
 		if(odds === null) return false;
+		if(time === "Half-time"){
+			if(chirp) ch.send("It's Half-time!");
+			chrip = false;
+			return false;
+		}
 
 		if(odds[5] === 1){
 			var teamA = parseOdd(odds[1]);
 			var teamB = parseOdd(odds[2]);
 			var msg = "";
-			matchOdds[2] = 0; //Set valid flag
+			chirp = true;
 
 			if(matchOdds[0].p !== teamA.p || matchOdds[1].p !== teamB.p){
 				matchOdds[0] = teamA;
@@ -106,8 +111,8 @@ var checkOdds = function(ch){
 				});
 			}	
 		} else if(odds[5] === 2){
-			if(matchOdds[2] !== 1) ch.send(odds[4]);
-			matchOdds[2] = 1; //Set invalid flag
+			if(chirp) ch.send(odds[4]);
+			chirp = false;			
 		}
 	});
 }
