@@ -43,19 +43,19 @@ vuvu.on('message', message => {
 	var cmd = args.shift().toLowerCase();	
 
 	if(cmd === "odds"){
-		g = parseInt(args[1]);
+		g = parseInt(args[1])-1;
 		if(!g){ message.channel.send("Please select a game! Use v!games to see todays games."); return false; }
 		
 		if(args[0] === "start"){
 			console.log("Starting Game "+g);		
 			checkOdds(message.channel, g);
-			todayGames[g-1].i = setInterval(function(){checkOdds(message.channel)}, 5*60*1000);
+			todayGames[g].i = setInterval(function(){checkOdds(message.channel)}, 5*60*1000);
 		}
 
 		if(args[0] === "stop"){
 			console.log("Stopping Game "+g);
 			message.channel.send("I told you to never tell me the odds.");
-			clearInterval(todayGames[g-1].i);
+			clearInterval(todayGames[g].i);
 		}
 
 		if(args[0] === "check"){
@@ -107,7 +107,7 @@ var match = {
 }
 
 var checkOdds = function(ch, g){	
-	var matchURL = "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:"+encodeURIComponent(todayGames[g-1].mid)+",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
+	var matchURL = "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:"+encodeURIComponent(todayGames[g].mid)+",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
 	console.log(matchURL);
 	request({url: matchURL, headers: {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function(error, response, body){
 		console.log("----------------------------")
@@ -115,7 +115,7 @@ var checkOdds = function(ch, g){
 		catch(e){
 			ch.send("Bad JSON! Abort abort.");
 			console.log("Stopping Game "+g);
-			clearInterval(todayGames[g-1].i);
+			clearInterval(todayGames[g].i);
 			console.log("Bad JSON");
 			return false;
 		}
@@ -130,7 +130,7 @@ var checkOdds = function(ch, g){
 		if(time.length === 3){
 			ch.send(gMatch[0][0]+" is over! The results are **"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**");
 			console.log("Stopping Game "+g);
-			clearInterval(todayGames[g-1].i);
+			clearInterval(todayGames[g].i);
 			return false;
 		}
 		if(time[6] === "Half-time"){
