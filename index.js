@@ -40,23 +40,26 @@ vuvu.on('message', message => {
 	if(message.content.indexOf(config.prefix) !== 0) return;
 
 	var args = message.content.slice(config.prefix.length).trim().split(/ +/g);
-	var cmd = args.shift().toLowerCase();
+	var cmd = args.shift().toLowerCase();	
 
 	if(cmd === "odds"){
 		g = parseInt(args[1]);
-		if(!g) message.channel.send("Please select a game! Use v!games to see todays games."); return false;
+		if(!g){ message.channel.send("Please select a game! Use v!games to see todays games."); return false; }
 		
-		if(args[0] === "start"){			
+		if(args[0] === "start"){
+			console.log("Starting Game "+g);		
 			checkOdds(message.channel, g);
-			todayGames[g].i = setInterval(function(){checkOdds(message.channel)}, 5*60*1000);
+			todayGames[g-1].i = setInterval(function(){checkOdds(message.channel)}, 5*60*1000);
 		}
 
 		if(args[0] === "stop"){
+			console.log("Stopping Game "+g);
 			message.channel.send("I told you to never tell me the odds.");
-			clearInterval(todayGames[g].i);
+			clearInterval(todayGames[g-1].i);
 		}
 
 		if(args[0] === "check"){
+			console.log("Checking Game "+g);
 			checkOdds(message.channel, g);
 		}
 	}
@@ -111,7 +114,8 @@ var checkOdds = function(ch, g){
 		try{ var gMatch = JSON.parse(body.substring(4)).match_fullpage; }
 		catch(e){
 			ch.send("Bad JSON! Abort abort.");
-			clearInterval(todayGames[g].i);
+			console.log("Stopping Game "+g);
+			clearInterval(todayGames[g-1].i);
 			console.log("Bad JSON");
 			return false;
 		}
@@ -125,7 +129,8 @@ var checkOdds = function(ch, g){
 
 		if(time.length === 3){
 			ch.send(gMatch[0][0]+" is over! The results are **"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**");
-			clearInterval(todayGames[g].i);
+			console.log("Stopping Game "+g);
+			clearInterval(todayGames[g-1].i);
 			return false;
 		}
 		if(time[6] === "Half-time"){
