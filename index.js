@@ -44,7 +44,7 @@ vuvu.on('message', message => {
 
 	if(cmd === "odds"){
 		g = parseInt(args[1])-1;
-		if(!g){ message.channel.send("Please select a game! Use v!games to see todays games."); return false; }
+		if(isNaN(g)){ message.channel.send("Please select a game! Use v!games to see todays games."); return false; }
 		
 		if(args[0] === "start"){
 			console.log("Starting Game "+g);		
