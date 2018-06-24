@@ -4,23 +4,29 @@ const webshot = require('webshot');
 const config = require("./config.json");
 const ggames = require("./ggames.json");
 const vuvu = new Discord.Client();
-var gameCode = "11f4qdwkfj"
-var matchURL = "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:%2Fg%2F"+gameCode+",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
+
 var oddsInterval;
 var notifyCh = [];
 
 var todayGames = [];
 var now = new Date();
 
-ggames.forEach(function(g){
-	var gday = new Date(g.start);
-	if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){
-  	todayGames.push(g);
-  }	
-})
+getGames = function(){
+	ggames.forEach(function(g){
+		var gday = new Date(g.start);
+		if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){
+	  	todayGames.push(g);
+	  }	
+	});
+
+	var checkon = new Date(now.toJSON().split("T")[0]+" 00:00:00");
+	checkon.setDate(checkon.getDate()+1);
+	setTimeout(getGames, checkon-now);
+}
 	
 vuvu.on('ready', function() {
     console.log(vuvu.user.username + " is online!");
+    getGames();
 });
 
 vuvu.on("guildCreate", guild => {
@@ -37,24 +43,45 @@ vuvu.on('message', message => {
 	var cmd = args.shift().toLowerCase();
 
 	if(cmd === "odds"){
-		if(args[0] === "start"){
-			checkOdds(message.channel);
-			oddsInterval = setInterval(function(){checkOdds(message.channel)}, 5*60*1000);
+		g = parseInt(args[1]);
+		if(!g) message.channel.send("Please select a game! Use v!games to see todays games."); return false;
+		
+		if(args[0] === "start"){			
+			checkOdds(message.channel, g);
+			todayGames[g].i = setInterval(function(){checkOdds(message.channel)}, 5*60*1000);
 		}
 
 		if(args[0] === "stop"){
 			message.channel.send("I told you to never tell me the odds.");
-			clearInterval(oddsInterval);
+			clearInterval(todayGames[g].i);
 		}
+
 		if(args[0] === "check"){
-			checkOdds(message.channel);
+			checkOdds(message.channel, g);
 		}
 	}
 
-	if(cmd === "url"){
-		matchURL = args[0];
-		message.channel.send("New Match URL Set!");
-		console.log(matchURL);
+	if(cmd === "games"){
+		var mids = [];
+		todayGames.forEach(function(g){ mids.push(g.mid); })
+		var matchListURL = "https://www.google.com/async/lr_ml?async=sp:2,emids:"+encodeURIComponent(mids.join(";"))+",mleid:,dlswm:1,iost:-1,ddwe:1,rptoadd:0,vst:fp,inhpt:1,ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb"
+		
+		request({url: matchListURL, headers: {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function(error, response, body){
+			try{ var gMatchList = JSON.parse(body.substring(4)).match_list[11]; }
+			catch(e){
+				ch.send("Bad JSON! Abort abort.");				
+				console.log("Bad JSON");
+				return false;
+			}
+			console.log("Matches Found: " + gMatchList.length);
+
+			matches = "Todays Matches Are:\n";
+			for(var i=0; i<gMatchList.length; i++){				
+				matches += "["+(i+1)+"] " + gMatchList[i][0][56] + "\n";
+			}
+
+			message.channel.send("```ini\n"+matches+"```");
+		});
 	}
 
 	if(cmd === "ping"){
@@ -76,13 +103,15 @@ var match = {
 	,"score": [-1,-1]	
 }
 
-var checkOdds = function(ch){
+var checkOdds = function(ch, g){	
+	var matchURL = "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:"+encodeURIComponent(todayGames[g-1].mid)+",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
+	console.log(matchURL);
 	request({url: matchURL, headers: {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function(error, response, body){
 		console.log("----------------------------")
 		try{ var gMatch = JSON.parse(body.substring(4)).match_fullpage; }
 		catch(e){
 			ch.send("Bad JSON! Abort abort.");
-			clearInterval(oddsInterval);
+			clearInterval(todayGames[g].i);
 			console.log("Bad JSON");
 			return false;
 		}
@@ -93,10 +122,10 @@ var checkOdds = function(ch){
 			{name:gMatch[1][0][1][0][1], abv: gMatch[1][0][1][0][2]}
 			,{name:gMatch[1][0][2][0][1], abv: gMatch[1][0][2][0][2]}
 		];
-		
+
 		if(time.length === 3){
 			ch.send(gMatch[0][0]+" is over! The results are **"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**");
-			clearInterval(oddsInterval);
+			clearInterval(todayGames[g].i);
 			return false;
 		}
 		if(time[6] === "Half-time"){
@@ -106,11 +135,11 @@ var checkOdds = function(ch){
 		}
 
 		if(match.score[0] !== score[0]){
-			if(match.score[0] >= 0) ch.send(team[0].name+" Scored!");
+			if(match.score[0] >= 0) ch.send(team[0].name+" Scored! **"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**");
 			match.score[0] = score[0];
 		}
 		if(match.score[1] !== score[1]){
-			if(match.score[1] >= 0) ch.send(team[1].name+" Scored!");
+			if(match.score[1] >= 0) ch.send(team[1].name+" Scored! **"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**");
 			match.score[1] = score[1];
 		}
 		
@@ -160,7 +189,7 @@ var checkOdds = function(ch){
 		}
 
 		console.log(match);
-		console.log('\n');
+		console.log('.');
 	});
 }
 
