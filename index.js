@@ -2,8 +2,22 @@ const Discord = require('discord.js');
 const request = require("request");
 const webshot = require('webshot');
 const config = require("./config.json");
+const ggames = require("./ggames.json");
 const vuvu = new Discord.Client();
-var matchURL = "https://www.google.com/async/lr_mt_fp?ei=O7UvW4HPBP-w0PEP0daT8Ak&rlz=1C1CHFX_enUS529US529&yv=3&async=sp:2,lmid:%2Fm%2F030q7,emid:%2Fg%2F11f4qd_7gl,tab:dt,ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
+var gameCode = "11f4qdwkfj"
+var matchURL = "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:%2Fg%2F"+gameCode+",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
+var oddsInterval;
+var notifyCh = [];
+
+var todayGames = [];
+var now = new Date();
+
+ggames.forEach(function(g){
+	var gday = new Date(g.start);
+	if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){
+  	todayGames.push(g);
+  }	
+})
 	
 vuvu.on('ready', function() {
     console.log(vuvu.user.username + " is online!");
@@ -32,6 +46,9 @@ vuvu.on('message', message => {
 			message.channel.send("I told you to never tell me the odds.");
 			clearInterval(oddsInterval);
 		}
+		if(args[0] === "check"){
+			checkOdds(message.channel);
+		}
 	}
 
 	if(cmd === "url"){
@@ -43,65 +60,92 @@ vuvu.on('message', message => {
 	if(cmd === "ping"){
 		message.channel.send("Pong!");
 	}
+
+	if(cmd === "test"){
+		if(args[0] === "spam"){
+			console.log(message.channel);
+		}
+	}
 });
 var chirp = true;
 var parseOdd = function(odd){
 	return {"name": odd[0], "color": odd[1], "p": odd[2]}
 }
-var matchOdds = [parseOdd(["TeamA", "#0000FF", "50"]), parseOdd(["TeamB", "#FF0000", "50"]), 0]
+var match = {
+	"odds": [parseOdd(["TeamA", "#0000FF", "50"]), parseOdd(["TeamB", "#FF0000", "50"])]
+	,"score": [-1,-1]	
+}
 
 var checkOdds = function(ch){
 	request({url: matchURL, headers: {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function(error, response, body){
 		console.log("----------------------------")
-		try{ var match = JSON.parse(body.substring(4)).match_fullpage; }
+		try{ var gMatch = JSON.parse(body.substring(4)).match_fullpage; }
 		catch(e){
 			ch.send("Bad JSON! Abort abort.");
 			clearInterval(oddsInterval);
 			console.log("Bad JSON");
 			return false;
 		}
-		var time = match[1][0][22][6];
-		var odds = match[7][0][2][27][10][1];
-		console.log(JSON.stringify(match[7][0][2]));
-		console.log(match[1][0][22]);
-		console.log(odds);
-		if(odds === null) return false;
-		if(time === "Half-time"){
-			if(chirp) ch.send("It's Half-time!");
-			chrip = false;
+		var time = gMatch[1][0][22];
+		var score = gMatch[1][0][24];
+		var odds = gMatch[7][0][2][27][10][1];
+		var team = [
+			{name:gMatch[1][0][1][0][1], abv: gMatch[1][0][1][0][2]}
+			,{name:gMatch[1][0][2][0][1], abv: gMatch[1][0][2][0][2]}
+		];
+		
+		if(time.length === 3){
+			ch.send(gMatch[0][0]+" is over! The results are **"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**");
+			clearInterval(oddsInterval);
 			return false;
 		}
+		if(time[6] === "Half-time"){
+			if(chirp) ch.send("It's half-time! The score is **"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**");
+			chrip = false;
+			return chrip;
+		}
 
+		if(match.score[0] !== score[0]){
+			if(match.score[0] >= 0) ch.send(team[0].name+" Scored!");
+			match.score[0] = score[0];
+		}
+		if(match.score[1] !== score[1]){
+			if(match.score[1] >= 0) ch.send(team[1].name+" Scored!");
+			match.score[1] = score[1];
+		}
+		
+		if(odds === null) return false;
 		if(odds[5] === 1){
 			var teamA = parseOdd(odds[1]);
 			var teamB = parseOdd(odds[2]);
+			var draw = parseOdd(odds[3]);
 			var msg = "";
 			chirp = true;
 
-			if(matchOdds[0].p !== teamA.p || matchOdds[1].p !== teamB.p){
-				matchOdds[0] = teamA;
-				matchOdds[1] = teamB;
-				
+			if(match.odds[0].p !== teamA.p || match.odds[1].p !== teamB.p){
+				match.odds[0] = teamA;
+				match.odds[1] = teamB;
+
 				var winprob = '<html><body style="font-family:Verdana;background-color:white;"><div>'
 				winprob += '<table style="width:100%;font-size:12px;">'
 				winprob += '<tr>'
-				winprob += '<td style="text-align:left;">'+matchOdds[0].name+'</td>'
+				winprob += '<td style="text-align:left;">'+teamA.name+'</td>'
 				winprob += '<td style="text-align:center;">Draw</td>'
-				winprob += '<td style="text-align:right;">'+matchOdds[1].name+'</td>'
+				winprob += '<td style="text-align:right;">'+teamB.name+'</td>'
 				winprob += '</tr>'
 				winprob += '<tr>'
-				winprob += '<td style="text-align:left;color:'+matchOdds[0].color+';">'+matchOdds[0].p+'%</td>'
-				winprob += '<td style="text-align:center;color:rgba(0,0,0,.54);">'+odds[3][2]+'%</td>'
-				winprob += '<td style="text-align:right;color:'+matchOdds[1].color+'">'+matchOdds[1].p+'%</td>'
+				winprob += '<td style="text-align:left;color:'+teamA.color+';">'+teamA.p+'%</td>'
+				winprob += '<td style="text-align:center;color:rgba(0,0,0,.54);">'+draw.p+'%</td>'
+				winprob += '<td style="text-align:right;color:'+teamB.color+'">'+teamB.p+'%</td>'
 				winprob += '</tr>'
 				winprob += '</table>'
 				winprob += '<table style="width:100%;height:15px;border-spacing:0;">'
-				winprob += '<td style="width:'+matchOdds[0].p+'%;background-color:'+matchOdds[0].color+';"></td>'
-				winprob += '<td style="width:'+odds[3][2]+'%;background-color:'+odds[3][1]+';"></td>'
-				winprob += '<td style="width:'+matchOdds[1].p+'%;background-color:'+matchOdds[1].color+';"></td>'
+				winprob += '<td style="width:'+teamA.p+'%;background-color:'+teamA.color+';"></td>'
+				winprob += '<td style="width:'+draw.p+'%;background-color:'+draw.color+';"></td>'
+				winprob += '<td style="width:'+teamB.p+'%;background-color:'+teamB.color+';"></td>'
 				winprob += '</table>'
 				winprob += '</div></body></html>'		
-				//console.log(winprob);
+				
 				var render = webshot(winprob, {siteType:'html', windowSize:{width:400, height:55}, shotOffset:{ left: 0, right: 0, top: 9, bottom: 0 }});
 				
 				ch.send({
@@ -114,6 +158,9 @@ var checkOdds = function(ch){
 			if(chirp) ch.send(odds[4]);
 			chirp = false;			
 		}
+
+		console.log(match);
+		console.log('\n');
 	});
 }
 
