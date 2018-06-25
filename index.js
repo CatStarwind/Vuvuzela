@@ -3,6 +3,7 @@ const request = require("request");
 const webshot = require('webshot');
 const config = require("./config.json");
 const ggames = require("./ggames.json");
+const cc = require("./countrycodes.json");
 const vuvu = new Discord.Client();
 
 var notifyCh = [];
@@ -16,6 +17,7 @@ var Match = function(game){
 		,i: game.i					//Interval
 		,match: game.match			//Persistent Match Info		
 		,audience: game.audience	//Channels to scream at
+		,oddsClosed: false			//Flag for Google closing odds
 		,send: function(msg, limit=false){			
 			this.audience.forEach(function(a){				
 				if(!limit || a.chirp){
@@ -175,10 +177,10 @@ var checkMatch = function(g){
 	request({url: matchURL, headers: {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function(error, response, body){		
 		try{
 			console.log("Parsing Game "+(g+1)+" ("+matchURL+")");
-			parseMatch(JSON.parse(body.substring(4)).match_fullpage, g); 			
+			parseMatch(JSON.parse(body.substring(4)).match_fullpage, g);
 		}
 		catch(e){			
-			todayGames[g].stop();
+			//todayGames[g].stop();
 			console.log("Bad JSON");
 			console.log(e);			
 			return false;
@@ -194,20 +196,34 @@ parseMatch = function(gmatch, g){
 	var time = gmatch[1][0][22];
 	var score = gmatch[1][0][24];
 	var odds = gmatch[7][0][2][27][10][1];
+	var minute = gmatch[1][0][11]; //0:Minute
+	var flag = gmatch[1][0][24][1]; //Possible Prediction Closing Flag when set to 2
 	var team = [
-		{name:gmatch[1][0][1][0][1], abv: gmatch[1][0][1][0][2]}
-		,{name:gmatch[1][0][2][0][1], abv: gmatch[1][0][2][0][2]}
+		{name:gmatch[1][0][1][0][1], abv: gmatch[1][0][1][0][2], code:'white'}
+		,{name:gmatch[1][0][2][0][1], abv: gmatch[1][0][2][0][2], code:'white'}
 	];
-	var scorebox = (score !== null) ? "**"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**" : "";	
+	team.forEach(team => { 
+		var country = cc.find(c => c.name === team.name);
+		if(country) team.code = country.code.toLowerCase();
+	});
+	var scorebox = (score !== null) ? ":flag_"+team[0].code+": "+score[0]+" - "+score[1]+" :flag_"+team[1].code+":" : "";
+
+	//Last call prediction	
+	if(minute !== null && minute[0] === 79 && !game.oddsClosed){
+		game.audience.forEach(a => {a.refresh = true;});
+		game.send("Last Call Prediction Coming Up!");
+		game.oddsClosed = true;
+	}
 	
 	//Googles time array varies
 	if(time.length === 3){
-		game.send(title+" is over! The results are "+scorebox);
+		game.send(title+" is over!\nFinal Score: "+scorebox);
+		console.log("Game "+(g+1)+" ended");
 		game.stop();
 		return false;
 	}
 	if(time[6] === "Half-time"){
-		game.send("It's half-time! The score is "+scorebox, true);
+		game.send("It's half-time!\nCurrently: "+scorebox, true);
 		return;
 	}
 
@@ -257,7 +273,7 @@ parseMatch = function(gmatch, g){
 				winprob += '</div></body></html>'
 				var render = webshot(winprob, {siteType:'html', windowSize:{width:400, height:55}, shotOffset:{ left: 0, right: 0, top: 9, bottom: 0 }});
 				
-				game.sendOdds(render);				
+				game.sendOdds(render);		
 			}
 		} else if(odds[5] === 2){
 			game.send(odds[4], true);			
