@@ -5,7 +5,6 @@ const config = require("./config.json");
 const ggames = require("./ggames.json");
 const vuvu = new Discord.Client();
 
-var chirp = true;
 var notifyCh = [];
 var todayGames = [];
 var now = new Date();
@@ -154,8 +153,8 @@ parseMatch = function(gmatch, ch, g){
 		return false;
 	}
 	if(time[6] === "Half-time"){
-		if(match.chirp) ch.send("It's half-time! The score is "+scorebox);		
-		return match.chrip=false;
+		if(match.chirp) ch.send("It's half-time! The score is "+scorebox);			
+		return match.chirp=false;
 	}
 
 	//Check for goal	
@@ -166,7 +165,6 @@ parseMatch = function(gmatch, ch, g){
 		}
 	}	
 	
-	console.log(match.refresh);
 	//Ensure odds exist and if refresh required
 	if(odds !== null && match.refresh){
 		//Google: 1 is populated, 2 is pending.
