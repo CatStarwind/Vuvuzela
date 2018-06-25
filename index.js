@@ -13,7 +13,7 @@ var parseOdd = function(odd){ return {"name": odd[0], "color": odd[1], "p": odd[
 
 //Handle only current day games
 var getGames = function(){
-	console.log("Checking games for "+now);
+	console.log("Checking games for " + now.toUTCString());
 	ggames.forEach(function(g){
 		var gday = new Date(g.start);
 		if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){
@@ -22,7 +22,8 @@ var getGames = function(){
 				"odds": [parseOdd(["TeamA", "#0000FF", "50"]), parseOdd(["TeamB", "#FF0000", "50"])]
 				,"score": [-1,-1]
 				,"refresh": true 
-			} 
+				,"chirp": true
+			}			
 			g.audience = []; //Channels to scream at			
 	  		todayGames.push(g);
 	  	}
@@ -153,8 +154,8 @@ parseMatch = function(gmatch, ch, g){
 		return false;
 	}
 	if(time[6] === "Half-time"){
-		if(chirp) ch.send("It's half-time! The score is "+scorebox);		
-		return chrip=false;
+		if(match.chirp) ch.send("It's half-time! The score is "+scorebox);		
+		return match.chrip=false;
 	}
 
 	//Check for goal	
@@ -175,7 +176,7 @@ parseMatch = function(gmatch, ch, g){
 			var draw = parseOdd(odds[3]);
 			var msg = "";
 			match.refresh = false;
-			chirp = true; //Reset chirp
+			match.chirp = true; //Reset chirp
 
 			//Check if odds have changed
 			if(match.odds[0].p !== teamA.p || match.odds[1].p !== teamB.p){
@@ -211,8 +212,8 @@ parseMatch = function(gmatch, ch, g){
 				});				
 			}
 		} else if(odds[5] === 2){
-			if(chirp) ch.send(odds[4]);
-			chirp = false;	
+			if(match.chirp) ch.send(odds[4]);
+			match.chirp = false;	
 		}
 
 		setTimeout(function(){match.refresh = true;}, 5*60*1000);
