@@ -18,8 +18,12 @@ var getGames = function(){
 		var gday = new Date(g.start);
 		if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){
 			g.i = null; //Internval
-			g.match = { "odds": [parseOdd(["TeamA", "#0000FF", "50"]), parseOdd(["TeamB", "#FF0000", "50"])], "score": [-1,-1] } //Persistent Match Info
-			g.audience = []; //Channels to scream at
+			g.match = { //Persistent Match Info
+				"odds": [parseOdd(["TeamA", "#0000FF", "50"]), parseOdd(["TeamB", "#FF0000", "50"])]
+				,"score": [-1,-1]
+				,"refresh": true 
+			} 
+			g.audience = []; //Channels to scream at			
 	  		todayGames.push(g);
 	  	}
 	});
@@ -57,15 +61,17 @@ vuvu.on('message', message => {
 			console.log("Adding "+message.channel.name+" in "+message.guild.name+" to audience for game "+g);
 			if(!todayGames[g].audience.find(c => c.id === message.channel.id)){
 				todayGames[g].audience.push(message.channel);
-			}			
+				console.log(todayGames[g].audience.length + " now listening.");				
+			}
 			checkMatch(message.channel, g);
-			todayGames[g].i = setInterval(function(){checkMatch(message.channel)}, 5*1000);
+			if(todayGames[g].i === null) todayGames[g].i = setInterval(function(){checkMatch(message.channel, g)}, 5*1000);			
 		}
 
 		if(args[0] === "stop"){
 			console.log("Stopping Game "+g);
 			message.channel.send("I told you to never tell me the odds.");
 			clearInterval(todayGames[g].i);
+			todayGames[g].i = null;
 		}
 
 		if(args[0] === "check"){
@@ -107,7 +113,7 @@ vuvu.on('message', message => {
 });
 
 var checkMatch = function(ch, g){
-	console.log("----------------------------");
+	console.log("----------------------------");	
 	var matchURL = "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:"+encodeURIComponent(todayGames[g].mid)+",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
 	console.log(matchURL);
 
@@ -117,13 +123,14 @@ var checkMatch = function(ch, g){
 			ch.send("Bad JSON! Abort abort.");
 			console.log("Stopping Game "+g);
 			clearInterval(todayGames[g].i);
+			todayGames[g] = null;
 			console.log("Bad JSON");
 			return false;
 		}
 	});
 }
 
-parseMatch = function(gmatch, ch, g){
+parseMatch = function(gmatch, ch, g){	
 	//Grab from Google match_info Array
 	var match = todayGames[g].match;
 	var title = gmatch[0][0];
@@ -135,14 +142,14 @@ parseMatch = function(gmatch, ch, g){
 		,{name:gmatch[1][0][2][0][1], abv: gmatch[1][0][2][0][2]}
 	];
 	var scorebox = "**"+team[0].abv+"** "+score[0]+" - "+score[1]+" **"+team[1].abv+"**";
-
 	console.log("Parsing Game "+g+": "+title);
-
+	
 	//Googles time array varies
 	if(time.length === 3){
 		ch.send(title+" is over! The results are "+scorebox);
 		console.log("Stopping Game "+g);
 		clearInterval(todayGames[g].i);
+		todayGames[g] = null;
 		return false;
 	}
 	if(time[6] === "Half-time"){
@@ -150,14 +157,17 @@ parseMatch = function(gmatch, ch, g){
 		return chrip=false;
 	}
 
-	//Check for goal
-	for(var i=0; i<score.length; i++){
-		if(match.score[i] !== score[i]) ch.send(team[0].name+" GOOOOOOOOOOOOOL! " + scorebox);
-		match.score[i] = score[i];
-	}
-
+	//Check for goal	
+	for(var i=0; i<match.score.length; i++){
+		if(match.score[i] !== score[i]){
+			if(match.score[i] >= 0) ch.send(team[0].name+" GOOOOOOOOOOOOOL! " + scorebox);
+			match.score[i] = score[i];
+		}
+	}	
+	
+	console.log(match.refresh);
 	//Ensure odds exist and if refresh required
-	if(odds === null && match.refresh){
+	if(odds !== null && match.refresh){
 		//Google: 1 is populated, 2 is pending.
 		if(odds[5] === 1){
 			var teamA = parseOdd(odds[1]);
@@ -196,15 +206,16 @@ parseMatch = function(gmatch, ch, g){
 				ch.send({
 					files: [{ attachment: render,  name: 'winprob.jpg'  }]
 				}).catch(err => {
-					console.log(err); if(err.code ===  50013){message.channel.send("I can't attach images! :(")} 
-				});
-
-				setTimeout(function(){match.refresh = true;}, 5*60*1000)
+					console.log(err.name +": "+err.message+" ("+err.code+")");
+					if(err.code ===  50013) ch.send("I can't attach images! :(");
+				});				
 			}
 		} else if(odds[5] === 2){
 			if(chirp) ch.send(odds[4]);
 			chirp = false;	
 		}
+
+		setTimeout(function(){match.refresh = true;}, 5*60*1000);
 	}
 }
 
