@@ -179,8 +179,9 @@ var checkMatch = function(g){
 			console.log("Parsing Game "+(g+1)+" ("+matchURL+")");
 			parseMatch(JSON.parse(body.substring(4)).match_fullpage, g);
 		}
-		catch(e){			
-			//todayGames[g].stop();
+		catch(e){
+			todayGames[g].send("Something BAD happened to Game "+(g+1)+". :(")
+			todayGames[g].stop();
 			console.log("Bad JSON");
 			console.log(e);			
 			return false;
@@ -197,7 +198,7 @@ parseMatch = function(gmatch, g){
 	var score = gmatch[1][0][24];
 	var odds = gmatch[7][0][2][27][10][1];
 	var minute = gmatch[1][0][11]; //0:Minute
-	var flag = gmatch[1][0][24][1]; //Possible Prediction Closing Flag when set to 2
+	var flag = gmatch[1][0][24]; //1:Possible Prediction Closing Flag when set to 2
 	var team = [
 		{name:gmatch[1][0][1][0][1], abv: gmatch[1][0][1][0][2], code:'white'}
 		,{name:gmatch[1][0][2][0][1], abv: gmatch[1][0][2][0][2], code:'white'}
