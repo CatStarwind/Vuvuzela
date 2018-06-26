@@ -15,7 +15,7 @@ Displays games for the day and their `gameID`
 ```ini
 Todays Matches Are:
 [1] Team A vs Team B
-[2] Uruguay vs Russia
+[2] Team C vs Team D
 ```
 
 
