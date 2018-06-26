@@ -244,6 +244,9 @@ parseMatch = function(gmatch, g){
 	});
 	var scorebox = (score !== null) ? ":flag_"+team[0].code+": "+score[0]+" - "+score[1]+" :flag_"+team[1].code+":" : "";
 
+	//Yell Requested Scores
+	if(game.scoreCheck.length) game.sendScore(scorebox);
+
 	//Last call prediction	
 	if(minute !== null && minute[0] === 79 && !game.oddsClosed){
 		game.audience.forEach(a => {a.refresh = true;});
@@ -272,11 +275,7 @@ parseMatch = function(gmatch, g){
 			}
 		}
 	}
-
-	//Yell Requested Scores
-	if(game.scoreCheck.length){
-		game.sendScore(scorebox);
-	}
+	
 	
 	//Ensure odds exist and if refresh required
 	if(odds !== null && game.audience.find(a => a.refresh)){
