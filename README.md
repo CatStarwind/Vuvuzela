@@ -1,5 +1,7 @@
 # Vuvuzela
-Discord World Cup Win Probability Bot
+Discord World Cup Win Probability Bot.
+
+[Invite me!](https://discordapp.com/oauth2/authorize?client_id=460072906102276098&scope=bot)
 
 
 ## Commands
