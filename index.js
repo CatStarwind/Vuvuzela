@@ -8,7 +8,6 @@ const vuvu = new Discord.Client();
 
 var notifyCh = [];
 var todayGames = [];
-var now = new Date();
 var parseOdd = function(odd){ return {"name": odd[0], "color": odd[1], "p": odd[2]} }
 var Match = function(game){	
 	return {
@@ -64,6 +63,7 @@ var Viewer = function(ch){
 
 //Handle only current day games
 var getGames = function(){
+	var now = new Date();
 	console.log("Checking games for " + now.toUTCString());
 	ggames.forEach(function(g){
 		var gday = new Date(g.start);
