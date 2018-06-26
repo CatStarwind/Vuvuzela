@@ -17,6 +17,7 @@ var Match = function(game){
 		,match: game.match			//Persistent Match Info		
 		,audience: game.audience	//Channels to scream at
 		,oddsClosed: false			//Flag for Google closing odds
+		,scoreCheck: []				//Channels requesting scores
 		,send: function(msg, limit=false){			
 			this.audience.forEach(function(a){				
 				if(!limit || a.chirp){
@@ -34,7 +35,7 @@ var Match = function(game){
 					}).then(msg => {
 						a.refresh = false; //Cool down
 						a.chirp = true; //Reset chirp
-						setTimeout(function(){a.refresh = true;}, 5*60*1000);
+						setTimeout(function(){this.refresh = true;}.bind(a), 5*60*1000);
 					}).catch(err => {
 						console.log(err.name +": "+err.message+" ("+err.code+")");
 						if(err.code ===  50013) a.channel.send("I can't attach images! :(");
@@ -42,9 +43,16 @@ var Match = function(game){
 				}
 			});
 		}
+		,sendScore: function(scorebox){
+			if(scorebox === "") scorebox = "N/A";
+			this.scoreCheck.forEach(function(ch){				
+				ch.send(scorebox);
+			});
+			this.scoreCheck = [];
+		}
 		,check: function(){			
 			checkMatch(todayGames.findIndex(g => g.mid === this.mid));
-		}
+		}		
 		,stop: function(i){
 			console.log("Stopping Game "+(todayGames.findIndex(g => g.mid === this.mid)+1));			
 			clearInterval(this.i);
@@ -166,6 +174,20 @@ vuvu.on('message', message => {
 		});
 	}
 
+	if(cmd === "score"){
+		var g = parseInt(args[0])-1;
+
+		if(isNaN(g) || g < 0 || g >= todayGames.length){ 
+			message.channel.send("Please select a game! Use v!games to see todays games.");
+			return;
+		}
+		console.log("Checking Game "+(g+1)+" Score for #"+message.channel.name+" in ["+message.guild.name+"]");
+		var game = todayGames[g];		
+		game.scoreCheck.push(message.channel);
+
+		if(game.i === null) checkMatch(g);
+	}
+
 	if(cmd === "ping"){
 		message.channel.send("Pong!");
 	}
@@ -196,9 +218,10 @@ parseMatch = function(gmatch, g){
 	var title = gmatch[0][0];
 	var time = gmatch[1][0][22];
 	var score = gmatch[1][0][24];
-	var odds = gmatch[7][0][2][27][10][1];
+	var odds = gmatch[7][0][2][27][10];
+	odds = (odds) ? odds[1] : null; //Stop-gap because Google is getting angry	
 	var minute = gmatch[1][0][11]; //0:Minute
-	var flag = gmatch[1][0][24]; //1:Possible Prediction Closing Flag when set to 2
+	//var flag = gmatch[1][0][24][1] //Possible Prediction Closing Flag when set to 2
 	var team = [
 		{name:gmatch[1][0][1][0][1], abv: gmatch[1][0][1][0][2], code:'white'}
 		,{name:gmatch[1][0][2][0][1], abv: gmatch[1][0][2][0][2], code:'white'}
@@ -224,7 +247,7 @@ parseMatch = function(gmatch, g){
 		return false;
 	}
 	if(time[6] === "Half-time"){
-		game.send("It's half-time!\nCurrently: "+scorebox, true);
+		game.send("It's half-time!\n"+scorebox, true);
 		return;
 	}
 
@@ -232,10 +255,15 @@ parseMatch = function(gmatch, g){
 	if(score !== null){
 		for(var i=0; i<match.score.length; i++){
 			if(match.score[i] !== score[i]){
-				if(match.score[i] >= 0) game.send(team[i].name+" GOOOOOOOOOOOOOL! " + scorebox);
+				if(match.score[i] >= 0) game.send(team[i].name+" GOOOOOOOOOOOOOL!\n" + scorebox);
 				match.score[i] = score[i];
 			}
 		}
+	}
+
+	//Yell Requested Scores
+	if(game.scoreCheck.length){
+		game.sendScore(scorebox);
 	}
 	
 	//Ensure odds exist and if refresh required
