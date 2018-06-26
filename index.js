@@ -203,7 +203,7 @@ vuvu.on('message', message => {
 	if(cmd === "ping"){
 		message.channel.send("Pong!");
 	}
-	
+
 	/*
 	if(cmd === "test"){
 		var fs = require("fs");
@@ -224,7 +224,7 @@ var checkMatch = function(g){
 			parseMatch(JSON.parse(body.substring(4)).match_fullpage, g);
 		}
 		catch(e){
-			todayGames[g].send("Something BAD happened to Game "+(g+1)+". :(")
+			todayGames[g].send("Google killed "+(g+1)+". :( Please restart with `v!odds start "+(g+1)+"`")
 			todayGames[g].stop();
 			console.log("Bad JSON");
 			console.log(e);			
