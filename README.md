@@ -30,6 +30,11 @@ Command | Description
 `v!odds stop [gameID]` | Stops probability messages for `gameID`
 `v!odds check [gameID]` | Send probability for `gameID`
 
+### score
+`v!score [gameID]`
+
+Check game score.
+
 ### ping
 `v!ping`
 pong!
