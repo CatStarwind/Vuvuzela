@@ -203,6 +203,16 @@ vuvu.on('message', message => {
 	if(cmd === "ping"){
 		message.channel.send("Pong!");
 	}
+	
+	/*
+	if(cmd === "test"){
+		var fs = require("fs");
+		var json = fs.readFileSync('test.json', 'utf-8');
+		var game = todayGames[1];
+		if(!game.audience.find(v => v.channel.id === message.channel.id)) game.audience.push(Viewer(message.channel));
+		parseMatch(JSON.parse(json).match_fullpage, 1);
+	}
+	*/
 });
 
 var checkMatch = function(g){	
@@ -261,16 +271,28 @@ parseMatch = function(gmatch, g){
 		game.stop();
 		return false;
 	}
-	if(time[6] === "Half-time"){
-		game.send("It's half-time!\n"+scorebox, true);
+	if(time[6] === "Half-time"){		
+		var ecolor = odds[(score[0] === score[1] ? 3 : (score[0] > score[1] ? 1 : 2))][1];		
+		var rich = { "embed": { 
+			"description": "It's half-time!\n"+scorebox
+			, "color": parseInt(ecolor.replace("#", "0x"), 16) 
+		}}		
+		game.send(rich);
 		return;
 	}
-
+	console.log(score);
+	console.log(match.odds);
 	//Check for goal
 	if(score !== null){
 		for(var i=0; i<match.score.length; i++){
 			if(match.score[i] !== score[i]){
-				if(match.score[i] >= 0) game.send(team[i].name+" GOOOOOOOOOOOOOL!\n" + scorebox);
+				if(match.score[i] >= 0){
+					var cantor = { "embed": { 
+						"description": team[i].name.toUpperCase() + " GOOOOOOOOOOOOOL!\n\n" + scorebox
+						, "color": parseInt(match.odds[i].color.replace("#", "0x"), 16) 
+					}}					
+					game.send(cantor);
+				}
 				match.score[i] = score[i];
 			}
 		}
