@@ -115,40 +115,40 @@ vuvu.on('message', message => {
 	var cmd = args.shift().toLowerCase();
 
 	if(cmd === "odds"){
-		g = parseInt(args[1])-1;
-
+		var g = parseInt(args[1])-1;
 		if(isNaN(g) || g < 0 || g >= todayGames.length){ 
 			message.channel.send("Please select a game! Use v!games to see todays games.");
 			return;
 		}
+		var game = todayGames[g];
 		
 		if(args[0] === "start"){			
-			if(!todayGames[g].audience.find(v => v.channel.id === message.channel.id)){
+			if(!game.audience.find(v => v.channel.id === message.channel.id)){
 				console.log("Adding #"+message.channel.name+" in ["+message.guild.name+"] to audience for game "+(g+1));
-				todayGames[g].audience.push(Viewer(message.channel));
-				console.log(todayGames[g].audience.length + " now listening.");
+				game.audience.push(Viewer(message.channel));
+				console.log(game.audience.length + " now listening.");
 			} else {
 				message.channel.send("You're already tunned in!");
 			}	
-			if(todayGames[g].i === null) todayGames[g].i = setInterval(todayGames[g].check.bind(todayGames[g]), 5*1000);
+			if(game.i === null) game.i = setInterval(game.check.bind(game), 5*1000);
 			
 		}
 
 		if(args[0] === "stop"){			
-			var i = todayGames[g].audience.findIndex(v => v.channel.id  === message.channel.id);			
+			var i = game.audience.findIndex(v => v.channel.id  === message.channel.id);			
 
 			if(i >= 0) {
 				console.log("Removing #"+message.channel.name+" in ["+message.guild.name+"] to audience for game "+(g+1));
-				todayGames[g].audience.splice(i, 1);
+				game.audience.splice(i, 1);
 				message.channel.send("I told you to never tell me the odds.");
-				console.log(todayGames[g].audience.length + " now listening.");
-				if(todayGames[g].audience.length === 0)	todayGames[g].stop();
+				console.log(game.audience.length + " now listening.");
+				if(game.audience.length === 0)	game.stop();
 			}
 		}
 
 		if(args[0] === "check"){
 			console.log("Checking Game "+(g+1)+" for #"+message.channel.name+" in ["+message.guild.name+"]");			
-			var ch = todayGames[g].audience.find(v => v.channel.id === message.channel.id);			
+			var ch = game.audience.find(v => v.channel.id === message.channel.id);			
 			if(ch) ch.refresh = true;
 		}
 	}
@@ -182,10 +182,22 @@ vuvu.on('message', message => {
 			return;
 		}
 		console.log("Checking Game "+(g+1)+" Score for #"+message.channel.name+" in ["+message.guild.name+"]");
-		var game = todayGames[g];		
+		var game = todayGames[g];	
 		game.scoreCheck.push(message.channel);
-
 		if(game.i === null) checkMatch(g);
+	}
+
+	if(cmd === "help"){
+		var helptext = "```css\nVuvuzela Commands```"
+		helptext += "**v!games** - Displays today's games.\n"
+		helptext += "**v!odds start [gameid]** - Start probability messages for selected game.\n"
+		helptext += "**v!odds stop [gameid]** - Stop probability messages for selected game.\n"
+		helptext += "**v!odds check [gameid]** - Check probability for selected game.\n"
+		helptext += "**v!score [gameid]** - Check game score.\n"
+		helptext += "**v!ping** - Pong!"
+		helptext += "```# Don't include the example brackets when using commands!```"
+
+		message.channel.send(helptext);
 	}
 
 	if(cmd === "ping"){
@@ -235,7 +247,7 @@ parseMatch = function(gmatch, g){
 	//Last call prediction	
 	if(minute !== null && minute[0] === 79 && !game.oddsClosed){
 		game.audience.forEach(a => {a.refresh = true;});
-		game.send("Last Call Prediction Coming Up!");
+		game.send("Last Call Prediction for "+title+" Coming Up!");
 		game.oddsClosed = true;
 	}
 	
@@ -281,7 +293,7 @@ parseMatch = function(gmatch, g){
 				match.odds[0] = teamA;
 				match.odds[1] = teamB;
 
-				var winprob = '<html><body style="font-family:Verdana;background-color:white;"><div>'
+				var winprob = '<html><body style="font-family:Verdana;background-color:'+(game.oddsClosed ? "pink" : "white")+';"><div>'
 				winprob += '<table style="width:100%;font-size:12px;">'
 				winprob += '<tr>'
 				winprob += '<td style="text-align:left;">'+teamA.name+'</td>'
