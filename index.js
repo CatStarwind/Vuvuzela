@@ -78,7 +78,7 @@ var getGames = function(){
 		if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){
 			g.i = null;
 			g.match = {
-				"odds": [parseOdd(["TeamA", "#0000FF", "50"]), parseOdd(["TeamB", "#FF0000", "50"])]
+				"odds": [parseOdd(["TeamA", "#0000FF", "40"]), parseOdd(["TeamB", "#FF0000", "40"]), parseOdd(["Draw", "#000000", "20"])]
 				,"score": [-1,-1]
 				,"refresh": true 
 				,"chirp": true
@@ -266,7 +266,12 @@ parseMatch = function(gmatch, g){
 	
 	//Googles time array varies
 	if(time.length === 3){
-		game.send(title+" is over!\nFinal Score: "+scorebox);
+		var ecolor = match.odds[(score[0] === score[1] ? 2 : (score[0] > score[1] ? 0 : 1))].color;
+		var rich = { "embed": { 
+			"description": title+" is over!\nFinal Score: "+scorebox
+			, "color": parseInt(ecolor.replace("#", "0x"), 16) 
+		}}
+		game.send(rich);
 		console.log("Game "+(g+1)+" ended");
 		game.stop();
 		return false;
@@ -276,7 +281,7 @@ parseMatch = function(gmatch, g){
 		var rich = { "embed": { 
 			"description": "It's half-time!\n"+scorebox
 			, "color": parseInt(ecolor.replace("#", "0x"), 16) 
-		}}		
+		}}
 		game.send(rich);
 		return;
 	}
@@ -313,6 +318,7 @@ parseMatch = function(gmatch, g){
 			if(match.odds[0].p !== teamA.p || match.odds[1].p !== teamB.p || game.audience.find(a => a.refresh)){
 				match.odds[0] = teamA;
 				match.odds[1] = teamB;
+				match.odds[2] = draw;
 
 				var winprob = '<html><body style="font-family:Verdana;background-color:'+(game.oddsClosed ? "whitesmoke" : "white")+';"><div>'
 				winprob += '<table style="width:100%;font-size:12px;">'
