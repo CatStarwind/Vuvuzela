@@ -7,9 +7,8 @@ const cc = require("./countrycodes.json");
 const vuvu = new Discord.Client();
 const oddsTimer = 10; //Minutes
 
-var notifyCh = [];
 var todayGames = [];
-var parseOdd = function(odd){ return {"name": odd[0], "color": odd[1], "p": odd[2]} }
+var parseOdd = function(odd){ return {"name": odd[0], "color": odd[1], "p": odd[2]}; };
 var Match = function(game){	
 	return {
 		mid: game.mid				//MatchID
@@ -37,7 +36,7 @@ var Match = function(game){
 						game.send(msg, true);						
 					} else {
 						console.log("Sending odds to #"+a.channel.name+" in ["+a.channel.guild.name+"]");
-						a.channel.send(msg).then(msg => {
+						a.channel.send(msg).then(function(){							
 							a.refresh = false; //Cool down
 							a.chirp = true; //Reset chirp
 							if(a.to === null) a.to = setTimeout(function(){this.refresh = true; this.to = null;}.bind(a), oddsTimer*60*1000);
@@ -56,22 +55,22 @@ var Match = function(game){
 		,check: function(){			
 			checkMatch(todayGames.findIndex(g => g.mid === this.mid));
 		}		
-		,stop: function(i){
+		,stop: function(){
 			console.log("Stopping Game "+(todayGames.findIndex(g => g.mid === this.mid)+1));			
 			clearInterval(this.i);
 			this.i = null;
 			this.audience = [];	
 		}
-	}
-}
+	};
+};
 var Viewer = function(ch){
 	return {
 		channel: ch
 		,refresh: true
 		,chirp: true
 		,to: null
-	}
-}
+	};
+};
 
 //Handle only current day games
 var getGames = function(){
@@ -87,19 +86,19 @@ var getGames = function(){
 				,"score": [-1,-1]
 				,"refresh": true 
 				,"chirp": true
-			}			
+			};			
 			g.audience = [];
 
-	  		todayGames.push(Match(g));
-	  	}
+			todayGames.push(Match(g));
+		}
 	});
-	console.log(todayGames.length + " matches found.")
+	console.log(todayGames.length + " matches found.");
 
 	//Check again next day
 	var checkon = new Date(now.toJSON().split("T")[0]+" 00:00:00");
 	checkon.setDate(checkon.getDate()+1);
 	setTimeout(getGames, checkon-now);
-}
+};
 	
 vuvu.on('ready', function() {
     console.log(vuvu.user.username + " is online!");
@@ -121,12 +120,12 @@ vuvu.on('message', message => {
 	var cmd = args.shift().toLowerCase();
 
 	if(cmd === "odds"){
-		var g = parseInt(args[1])-1;
+		let g = parseInt(args[1])-1;
 		if(isNaN(g) || g < 0 || g >= todayGames.length){ 
 			message.channel.send("Please select a game! Use v!games to see todays games.");
 			return;
 		}
-		var game = todayGames[g];
+		let game = todayGames[g];
 		
 		if(args[0] === "start"){			
 			if(!game.audience.find(v => v.channel.id === message.channel.id)){
@@ -141,7 +140,7 @@ vuvu.on('message', message => {
 		}
 
 		if(args[0] === "stop"){			
-			var i = game.audience.findIndex(v => v.channel.id  === message.channel.id);
+			let i = game.audience.findIndex(v => v.channel.id  === message.channel.id);
 
 			if(i >= 0) {
 				console.log("Removing #"+message.channel.name+" in ["+message.guild.name+"] to audience for game "+(g+1));
@@ -156,14 +155,13 @@ vuvu.on('message', message => {
 
 		if(args[0] === "check"){
 			console.log("Checking Game "+(g+1)+" for #"+message.channel.name+" in ["+message.guild.name+"]");			
-			var ch = game.audience.find(v => v.channel.id === message.channel.id);		
+			let ch = game.audience.find(v => v.channel.id === message.channel.id);		
 			ch ? ch.refresh = true : game.audience.push(Viewer(message.channel));
 
 			if(game.i === null){
 				checkMatch(g);
 				setTimeout(function(){					
-					var i = this.audience.findIndex(v => v.channel.id  === message.channel.id);
-					this.audience.splice(i, 1);
+					this.audience.splice(this.audience.findIndex(v => v.channel.id  === message.channel.id), 1);
 				}.bind(game), 5*1000);
 			}
 
@@ -171,20 +169,21 @@ vuvu.on('message', message => {
 	}
 
 	if(cmd === "games"){
-		var mids = [];
-		todayGames.forEach(function(g){ mids.push(g.mid); })
-		var matchListURL = "https://www.google.com/async/lr_ml?async=sp:2,emids:"+encodeURIComponent(mids.join(";"))+",mleid:,dlswm:1,iost:-1,ddwe:1,rptoadd:0,vst:fp,inhpt:1,ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb"
-		
+		let mids = [];
+		todayGames.forEach(g => mids.push(g.mid));
+
+		let matchListURL = "https://www.google.com/async/lr_ml?async=sp:2,emids:"+encodeURIComponent(mids.join(";"))+",mleid:,dlswm:1,iost:-1,ddwe:1,rptoadd:0,vst:fp,inhpt:1,ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";		
 		request({url: matchListURL, headers: {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function(error, response, body){
-			try{ var gMatchList = JSON.parse(body.substring(4)).match_list[11]; }
+			var gMatchList = [];
+			try{ gMatchList = JSON.parse(body.substring(4)).match_list[11]; }
 			catch(e){
-				ch.send("Bad JSON! Abort abort.");				
+				message.channel.send("Bad JSON! Abort abort.");				
 				console.log("Bad JSON");
-				return false;
+				return;
 			}			
 
-			matches = "Todays Matches Are:\n";
-			for(var i=0; i<gMatchList.length; i++){				
+			var matches = "Todays Matches Are:\n";
+			for(let i=0; i<gMatchList.length; i++){				
 				matches += "["+(i+1)+"] " + gMatchList[i][0][56] + "\n";
 			}
 			message.channel.send("```ini\n"+matches+"```");
@@ -192,27 +191,27 @@ vuvu.on('message', message => {
 	}
 
 	if(cmd === "score"){
-		var g = parseInt(args[0])-1;
+		let g = parseInt(args[0])-1;
 		if(isNaN(g) || g < 0 || g >= todayGames.length){ 
 			message.channel.send("Please select a game! Use v!games to see todays games.");
 			return;
 		}
 
 		console.log("Checking Game "+(g+1)+" Score for #"+message.channel.name+" in ["+message.guild.name+"]");
-		var game = todayGames[g];	
+		let game = todayGames[g];	
 		game.scoreCheck.push(message.channel);
 		if(game.i === null) checkMatch(g);
 	}
 
 	if(cmd === "help"){
-		var helptext = "```css\nVuvuzela Commands```"
-		helptext += "**v!games** - Displays today's games.\n"
-		helptext += "**v!odds start [gameid]** - Start probability messages for selected game.\n"
-		helptext += "**v!odds stop [gameid]** - Stop probability messages for selected game.\n"
-		helptext += "**v!odds check [gameid]** - Check probability for selected game.\n"
-		helptext += "**v!score [gameid]** - Check game score.\n"
-		helptext += "**v!ping** - Pong!"
-		helptext += "```# Don't include the example brackets when using commands!```"
+		let helptext = "```css\nVuvuzela Commands```";
+		helptext += "**v!games** - Displays today's games.\n";
+		helptext += "**v!odds start [gameid]** - Start probability messages for selected game.\n";
+		helptext += "**v!odds stop [gameid]** - Stop probability messages for selected game.\n";
+		helptext += "**v!odds check [gameid]** - Check probability for selected game.\n";
+		helptext += "**v!score [gameid]** - Check game score.\n";
+		helptext += "**v!ping** - Pong!";
+		helptext += "```# Don't include the example brackets when using commands!```";
 
 		message.channel.send(helptext);
 	}
@@ -252,12 +251,12 @@ var checkMatch = function(g){
 			console.log("Bad JSON");
 			console.log(e);
 			*/
-			return false;
+			return;
 		}
 	});
-}
+};
 
-parseMatch = function(gmatch, g){	
+var parseMatch = function(gmatch, g){	
 	//Grab from Google match_info Array
 	var game = todayGames[g];
 	var match = game.match;
@@ -346,25 +345,25 @@ parseMatch = function(gmatch, g){
 				var teamB = match.odds[1];
 				var draw = match.odds[2];
 
-				var winprob = '<html><body style="font-family:Verdana;background-color:'+(game.oddsClosed ? "paleturquoise" : "white")+';"><div>'
-				winprob += '<table style="width:100%;font-size:12px;">'
-				winprob += '<tr>'
-				winprob += '<td style="text-align:left;">'+teamA.name+'</td>'
-				winprob += '<td style="text-align:center;">Draw</td>'
-				winprob += '<td style="text-align:right;">'+teamB.name+'</td>'
-				winprob += '</tr>'
-				winprob += '<tr>'
-				winprob += '<td style="text-align:left;color:'+teamA.color+';">'+teamA.p+'%</td>'
-				winprob += '<td style="text-align:center;color:rgba(0,0,0,.54);">'+draw.p+'%</td>'
-				winprob += '<td style="text-align:right;color:'+teamB.color+'">'+teamB.p+'%</td>'
-				winprob += '</tr>'
-				winprob += '</table>'
-				winprob += '<table style="width:100%;height:15px;border-spacing:0;">'
-				winprob += '<td style="width:'+teamA.p+'%;background-color:'+teamA.color+';"></td>'
-				winprob += '<td style="width:'+draw.p+'%;background-color:'+draw.color+';"></td>'
-				winprob += '<td style="width:'+teamB.p+'%;background-color:'+teamB.color+';"></td>'
-				winprob += '</table>'
-				winprob += '</div></body></html>'
+				var winprob = '<html><body style="font-family:Verdana;background-color:'+(game.oddsClosed ? "paleturquoise" : "white")+';"><div>';
+				winprob += '<table style="width:100%;font-size:12px;">';
+				winprob += '<tr>';
+				winprob += '<td style="text-align:left;">'+teamA.name+'</td>';
+				winprob += '<td style="text-align:center;">Draw</td>';
+				winprob += '<td style="text-align:right;">'+teamB.name+'</td>';
+				winprob += '</tr>';
+				winprob += '<tr>';
+				winprob += '<td style="text-align:left;color:'+teamA.color+';">'+teamA.p+'%</td>';
+				winprob += '<td style="text-align:center;color:rgba(0,0,0,.54);">'+draw.p+'%</td>';
+				winprob += '<td style="text-align:right;color:'+teamB.color+'">'+teamB.p+'%</td>';
+				winprob += '</tr>';
+				winprob += '</table>';
+				winprob += '<table style="width:100%;height:15px;border-spacing:0;">';
+				winprob += '<td style="width:'+teamA.p+'%;background-color:'+teamA.color+';"></td>';
+				winprob += '<td style="width:'+draw.p+'%;background-color:'+draw.color+';"></td>';
+				winprob += '<td style="width:'+teamB.p+'%;background-color:'+teamB.color+';"></td>';
+				winprob += '</table>';
+				winprob += '</div></body></html>';
 				var render = webshot(winprob, {siteType:'html', windowSize:{width:400, height:55}, shotOffset:{ left: 0, right: 0, top: 9, bottom: 0 }});				
 				
 				game.sendOdds({ files: [{ attachment: render,  name: 'winprob.jpg'  }] });
@@ -373,6 +372,6 @@ parseMatch = function(gmatch, g){
 			game.sendOdds(odds[4]);					
 		}
 	}
-}
+};
 
 vuvu.login(config.token);

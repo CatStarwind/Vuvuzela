@@ -1,0 +1,17 @@
+{
+    "extends": "eslint:recommended",
+    "env": {
+        "node": true,
+        "es6": true
+    },
+    "rules": {
+        "no-console": "off"
+        ,"block-scoped-var": "warn"
+        ,"complexity": ["warn", 25]
+        ,"consistent-return": "warn"
+        ,"guard-for-in": "warn"
+        ,"semi": "warn"
+        ,"semi-spacing": "warn"
+        ,"semi-style": "warn"
+    }
+}
