@@ -101,6 +101,7 @@ var getGames = function(){
 	
 vuvu.on('ready', function() {
     console.log(vuvu.user.username + " is online!");
+    vuvu.user.setActivity(`BZZZZing ${vuvu.guilds.size} servers`);
     getGames();    
 });
 
