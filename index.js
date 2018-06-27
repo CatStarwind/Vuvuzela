@@ -149,6 +149,8 @@ vuvu.on('message', message => {
 				message.channel.send("I told you to never tell me the odds.");
 				console.log(game.audience.length + " now listening.");
 				if(game.audience.length === 0)	game.stop();
+			} else {
+				message.channel.send("You're already tunned out!");
 			}
 		}
 
