@@ -234,11 +234,16 @@ vuvu.on('message', message => {
 
 var checkMatch = function(g){	
 	var matchURL = "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:"+encodeURIComponent(todayGames[g].mid)+",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";	
-
+	/*
+	var fs = require("fs");
+	var json = fs.readFileSync('test.json', 'utf-8');
+	parseMatch(JSON.parse(json).match_fullpage, 0);
+	return;
+	*/
 	request({url: matchURL, headers: {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function(error, response, body){		
 		try{
 			console.log("Parsing Game "+(g+1)+" ("+matchURL+")");
-			parseMatch(JSON.parse(body.substring(4)).match_fullpage, g);
+			parseMatch(JSON.parse(body.substring(4)).match_fullpage, g);			
 		}
 		catch(e){
 			/*
@@ -295,10 +300,10 @@ parseMatch = function(gmatch, g){
 		}}, true);
 		return;
 	}
-
+	
 	//Yell Requested Scores
 	if(game.scoreCheck.length) game.sendScore({ "embed": {
-		"title": "Score at " + (minute && minute[0])
+		"title": "Score at " + (minute && minute[0] + (minute[2] ? "+"+minute[2] : "")) + "'"
 		, "description": scorebox
 		, "color": parseInt(leadColor.replace("#", "0x"), 16) 
 	}});
