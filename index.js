@@ -22,10 +22,12 @@ var Match = function(game){
 		,send: function(msg, limit=false){			
 			this.audience.forEach(function(a){				
 				if(!limit || a.chirp){
-					a.channel.send(msg);
+					a.channel.send(msg);					
 					if(limit) a.chirp = false;
-				}				
+				}		
 			});
+			
+			if(this.scoreCheck.length) this.sendScore(msg);			
 		}
 		,sendOdds: function(msg){
 			var game = this;
@@ -47,11 +49,8 @@ var Match = function(game){
 				}
 			});
 		}
-		,sendScore: function(scorebox){
-			if(scorebox === "") scorebox = "N/A";
-			this.scoreCheck.forEach(function(ch){				
-				ch.send(scorebox);
-			});
+		,sendScore: function(msg){			
+			this.scoreCheck.forEach(ch => ch.send(msg));
 			this.scoreCheck = [];
 		}
 		,check: function(){			
@@ -192,11 +191,11 @@ vuvu.on('message', message => {
 
 	if(cmd === "score"){
 		var g = parseInt(args[0])-1;
-
 		if(isNaN(g) || g < 0 || g >= todayGames.length){ 
 			message.channel.send("Please select a game! Use v!games to see todays games.");
 			return;
 		}
+
 		console.log("Checking Game "+(g+1)+" Score for #"+message.channel.name+" in ["+message.guild.name+"]");
 		var game = todayGames[g];	
 		game.scoreCheck.push(message.channel);
@@ -271,9 +270,36 @@ parseMatch = function(gmatch, g){
 		if(country) team.code = country.code.toLowerCase();
 	});
 	var scorebox = (score !== null) ? ":flag_"+team[0].code+": "+score[0]+" - "+score[1]+" :flag_"+team[1].code+":" : "";
+	var leadColor = match.odds[(score[0] === score[1] ? 2 : (score[0] > score[1] ? 0 : 1))].color;
+
+	//Check if game is over
+	if(time.length === 3){
+		game.send({ "embed": {
+			"title": "Full-time!"
+			, "description": scorebox
+			, "color": parseInt(leadColor.replace("#", "0x"), 16) 
+		}});
+		console.log("Game "+(g+1)+" ended");
+		game.stop();
+		return;
+	}
+
+	//Check if game is at half
+	if(time[6] === "Half-time"){		
+		game.send({ "embed": {
+			"title": "Half-time!"
+			, "description": scorebox
+			, "color": parseInt(leadColor.replace("#", "0x"), 16) 
+		}}, true);
+		return;
+	}
 
 	//Yell Requested Scores
-	if(game.scoreCheck.length) game.sendScore(scorebox);
+	if(game.scoreCheck.length) game.sendScore({ "embed": {
+		"title": "Score at " + (minute && minute[0])
+		, "description": scorebox
+		, "color": parseInt(leadColor.replace("#", "0x"), 16) 
+	}});
 
 	//Last call prediction	
 	if(minute !== null && minute[0] === 79 && !game.oddsClosed){
@@ -282,47 +308,21 @@ parseMatch = function(gmatch, g){
 		game.oddsClosed = true;
 	}
 	
-	//Googles time array varies
-	if(time.length === 3){
-		var ecolor = match.odds[(score[0] === score[1] ? 2 : (score[0] > score[1] ? 0 : 1))].color;
-		var rich = { "embed": {
-			"title": "Full-time!"
-			, "description": scorebox
-			, "color": parseInt(ecolor.replace("#", "0x"), 16) 
-		}}
-		game.send(rich);
-		console.log("Game "+(g+1)+" ended");
-		game.stop();
-		return false;
-	}
-	if(time[6] === "Half-time"){		
-		var ecolor = odds[(score[0] === score[1] ? 3 : (score[0] > score[1] ? 1 : 2))][1];		
-		var rich = { "embed": {
-			"title": "Half-time!"
-			, "description": scorebox
-			, "color": parseInt(ecolor.replace("#", "0x"), 16) 
-		}}
-		game.send(rich, true);
-		return;
-	}
-	
 	//Check for goal
 	if(score !== null){
 		for(var i=0; i<match.score.length; i++){
 			if(match.score[i] !== score[i]){
-				if(match.score[i] >= 0){
-					var cantor = { "embed": { 
+				if(match.score[i] >= 0){									
+					game.send({ "embed": { 
 						"title": team[i].name.toUpperCase() + " GOOOOOOOOOOOOOL!"
 						,"description": scorebox
 						, "color": parseInt(match.odds[i].color.replace("#", "0x"), 16) 
-					}}					
-					game.send(cantor);
+					}});
 				}
 				match.score[i] = score[i];
 			}
 		}
 	}
-	
 	
 	//Ensure odds exist
 	if(odds !== null){		
