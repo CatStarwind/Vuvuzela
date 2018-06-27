@@ -334,7 +334,7 @@ parseMatch = function(gmatch, g){
 				match.odds[1] = teamB;
 				match.odds[2] = draw;
 
-				var winprob = '<html><body style="font-family:Verdana;background-color:'+(game.oddsClosed ? "whitesmoke" : "white")+';"><div>'
+				var winprob = '<html><body style="font-family:Verdana;background-color:'+(game.oddsClosed ? "paleturquoise" : "white")+';"><div>'
 				winprob += '<table style="width:100%;font-size:12px;">'
 				winprob += '<tr>'
 				winprob += '<td style="text-align:left;">'+teamA.name+'</td>'
