@@ -27,20 +27,23 @@ var Match = function(game){
 				}				
 			});
 		}
-		,sendOdds: function(o){
-			this.audience.forEach(function(a){				
+		,sendOdds: function(msg){
+			var game = this;
+			this.audience.forEach(function(a){
 				if(a.refresh){
-					console.log("Sending odds to #"+a.channel.name+" in ["+a.channel.guild.name+"]");
-					a.channel.send({
-						files: [{ attachment: o,  name: 'winprob.jpg'  }]
-					}).then(msg => {
-						a.refresh = false; //Cool down
-						a.chirp = true; //Reset chirp
-						if(a.to === null) a.to = setTimeout(function(){this.refresh = true; this.to = null;}.bind(a), oddsTimer*60*1000);
-					}).catch(err => {
-						console.log(err.name +": "+err.message+" ("+err.code+")");
-						if(err.code ===  50013) a.channel.send("I can't attach images! :(");
-					});
+					if(typeof msg === "string"){
+						game.send(msg, true);						
+					} else {
+						console.log("Sending odds to #"+a.channel.name+" in ["+a.channel.guild.name+"]");
+						a.channel.send(msg).then(msg => {
+							a.refresh = false; //Cool down
+							a.chirp = true; //Reset chirp
+							if(a.to === null) a.to = setTimeout(function(){this.refresh = true; this.to = null;}.bind(a), oddsTimer*60*1000);
+						}).catch(err => {
+							console.log(err.name +": "+err.message+" ("+err.code+")");
+							if(err.code ===  50013) a.channel.send("I can't attach images! :(");
+						});
+					}
 				}
 			});
 		}
@@ -81,7 +84,7 @@ var getGames = function(){
 		if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){
 			g.i = null;
 			g.match = {
-				"odds": [parseOdd(["TeamA", "#0000FF", "40"]), parseOdd(["TeamB", "#FF0000", "40"]), parseOdd(["Draw", "#000000", "20"])]
+				"odds": [parseOdd(["TeamA", "#FF0000", "40"]), parseOdd(["TeamB", "#0000FF", "40"]), parseOdd(["Draw", "#777777", "20"])]
 				,"score": [-1,-1]
 				,"refresh": true 
 				,"chirp": true
@@ -321,21 +324,20 @@ parseMatch = function(gmatch, g){
 	}
 	
 	
-	//Ensure odds exist and if refresh required
-	if(odds !== null && game.audience.find(a => a.refresh)){
-		console.log("Generating odds ("+odds[5]+") for Game "+(g+1));
+	//Ensure odds exist
+	if(odds !== null){		
 		//Google: 1 is populated, 2 is pending.
 		if(odds[5] === 1){
-			var teamA = parseOdd(odds[1]);
-			var teamB = parseOdd(odds[2]);
-			var draw = parseOdd(odds[3]);
-			var msg = "";			
+			match.odds[0] = parseOdd(odds[1]);
+			match.odds[1] = parseOdd(odds[2]);
+			match.odds[2] = parseOdd(odds[3]);						
 
-			//Check if odds have changed
-			if(match.odds[0].p !== teamA.p || match.odds[1].p !== teamB.p || game.audience.find(a => a.refresh)){
-				match.odds[0] = teamA;
-				match.odds[1] = teamB;
-				match.odds[2] = draw;
+			//Check if refresh requested
+			if(game.audience.find(a => a.refresh)){
+				console.log("Generating odds ("+odds[5]+") for Game "+(g+1));
+				var teamA = match.odds[0];
+				var teamB = match.odds[1];
+				var draw = match.odds[2];
 
 				var winprob = '<html><body style="font-family:Verdana;background-color:'+(game.oddsClosed ? "paleturquoise" : "white")+';"><div>'
 				winprob += '<table style="width:100%;font-size:12px;">'
@@ -356,12 +358,12 @@ parseMatch = function(gmatch, g){
 				winprob += '<td style="width:'+teamB.p+'%;background-color:'+teamB.color+';"></td>'
 				winprob += '</table>'
 				winprob += '</div></body></html>'
-				var render = webshot(winprob, {siteType:'html', windowSize:{width:400, height:55}, shotOffset:{ left: 0, right: 0, top: 9, bottom: 0 }});
+				var render = webshot(winprob, {siteType:'html', windowSize:{width:400, height:55}, shotOffset:{ left: 0, right: 0, top: 9, bottom: 0 }});				
 				
-				game.sendOdds(render);		
+				game.sendOdds({ files: [{ attachment: render,  name: 'winprob.jpg'  }] });
 			}
 		} else if(odds[5] === 2){
-			game.send(odds[4], true);			
+			game.sendOdds(odds[4]);					
 		}
 	}
 }
