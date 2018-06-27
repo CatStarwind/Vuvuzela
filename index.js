@@ -13,9 +13,9 @@ var Match = function(game){
 	return {
 		mid: game.mid				//MatchID
 		,start: game.start 			//Match Start
-		,i: game.i					//Interval
-		,match: game.match			//Persistent Match Info		
-		,audience: game.audience	//Channels to scream at
+		,match: game.match			//Persistent Match Info
+		,i: null					//Interval
+		,audience: []				//Channels to scream at
 		,oddsClosed: false			//Flag for Google closing odds
 		,scoreCheck: []				//Channels requesting scores
 		,send: function(msg, limit=false){			
@@ -79,16 +79,11 @@ var getGames = function(){
 	console.log("Checking games for " + now.toUTCString());
 	ggames.forEach(function(g){
 		var gday = new Date(g.start);
-		if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){
-			g.i = null;
+		if(now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]){			
 			g.match = {
 				"odds": [parseOdd(["TeamA", "#FF0000", "40"]), parseOdd(["TeamB", "#0000FF", "40"]), parseOdd(["Draw", "#777777", "20"])]
 				,"score": [-1,-1]
-				,"refresh": true 
-				,"chirp": true
-			};			
-			g.audience = [];
-
+			};
 			todayGames.push(Match(g));
 		}
 	});
@@ -109,7 +104,7 @@ vuvu.on('ready', function() {
 vuvu.on("guildCreate", guild => {
   // This event triggers when the bot joins a guild.
   console.log(`New guild joined: ${guild.name} (id: ${guild.id}). This guild has ${guild.memberCount} members!`);
-  vuvu.user.setActivity(`Serving ${vuvu.guilds.size} servers`);
+  vuvu.user.setActivity(`BZZZZing ${vuvu.guilds.size} servers`);
 });
 
 vuvu.on('message', message => {
