@@ -72,6 +72,7 @@ var Viewer = function(ch){
 //Handle only current day games
 var getGames = function(){
 	var now = new Date();
+	todayGames = [];
 	console.log("Checking games for " + now.toUTCString());
 	ggames.forEach(function(g){
 		var gday = new Date(g.start);
