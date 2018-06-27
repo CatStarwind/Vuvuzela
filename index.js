@@ -35,7 +35,7 @@ var Match = function(game){
 					}).then(msg => {
 						a.refresh = false; //Cool down
 						a.chirp = true; //Reset chirp
-						setTimeout(function(){this.refresh = true;}.bind(a), 5*60*1000);
+						setTimeout(function(){this.refresh = true;}.bind(a), 10*60*1000);
 					}).catch(err => {
 						console.log(err.name +": "+err.message+" ("+err.code+")");
 						if(err.code ===  50013) a.channel.send("I can't attach images! :(");
@@ -136,7 +136,7 @@ vuvu.on('message', message => {
 		}
 
 		if(args[0] === "stop"){			
-			var i = game.audience.findIndex(v => v.channel.id  === message.channel.id);			
+			var i = game.audience.findIndex(v => v.channel.id  === message.channel.id);
 
 			if(i >= 0) {
 				console.log("Removing #"+message.channel.name+" in ["+message.guild.name+"] to audience for game "+(g+1));
@@ -150,7 +150,16 @@ vuvu.on('message', message => {
 		if(args[0] === "check"){
 			console.log("Checking Game "+(g+1)+" for #"+message.channel.name+" in ["+message.guild.name+"]");			
 			var ch = game.audience.find(v => v.channel.id === message.channel.id);			
-			if(ch) ch.refresh = true;
+			ch ? ch.refresh = true : game.audience.push(Viewer(message.channel));
+
+			if(game.i === null){
+				checkMatch(g);
+				setTimeout(function(){					
+					var i = this.audience.findIndex(v => v.channel.id  === message.channel.id);
+					this.audience.splice(i, 1);
+				}.bind(game), 5*1000);
+			}
+
 		}
 	}
 
