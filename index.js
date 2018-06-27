@@ -149,7 +149,7 @@ vuvu.on('message', message => {
 
 		if(args[0] === "check"){
 			console.log("Checking Game "+(g+1)+" for #"+message.channel.name+" in ["+message.guild.name+"]");			
-			var ch = game.audience.find(v => v.channel.id === message.channel.id);			
+			var ch = game.audience.find(v => v.channel.id === message.channel.id);		
 			ch ? ch.refresh = true : game.audience.push(Viewer(message.channel));
 
 			if(game.i === null){
@@ -279,8 +279,9 @@ parseMatch = function(gmatch, g){
 	//Googles time array varies
 	if(time.length === 3){
 		var ecolor = match.odds[(score[0] === score[1] ? 2 : (score[0] > score[1] ? 0 : 1))].color;
-		var rich = { "embed": { 
-			"description": title+" is over!\nFinal Score: "+scorebox
+		var rich = { "embed": {
+			"title": "Full-time!"
+			, "description": scorebox
 			, "color": parseInt(ecolor.replace("#", "0x"), 16) 
 		}}
 		game.send(rich);
@@ -290,11 +291,12 @@ parseMatch = function(gmatch, g){
 	}
 	if(time[6] === "Half-time"){		
 		var ecolor = odds[(score[0] === score[1] ? 3 : (score[0] > score[1] ? 1 : 2))][1];		
-		var rich = { "embed": { 
-			"description": "It's half-time!\n"+scorebox
+		var rich = { "embed": {
+			"title": "Half-time!"
+			, "description": scorebox
 			, "color": parseInt(ecolor.replace("#", "0x"), 16) 
 		}}
-		game.send(rich);
+		game.send(rich, true);
 		return;
 	}
 	
