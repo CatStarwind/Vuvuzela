@@ -288,8 +288,7 @@ parseMatch = function(gmatch, g){
 		game.send(rich);
 		return;
 	}
-	console.log(score);
-	console.log(match.odds);
+	
 	//Check for goal
 	if(score !== null){
 		for(var i=0; i<match.score.length; i++){
