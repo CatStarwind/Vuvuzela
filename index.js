@@ -5,6 +5,7 @@ const config = require("./config.json");
 const ggames = require("./ggames.json");
 const cc = require("./countrycodes.json");
 const vuvu = new Discord.Client();
+const oddsTimer = 10; //Minutes
 
 var notifyCh = [];
 var todayGames = [];
@@ -35,7 +36,7 @@ var Match = function(game){
 					}).then(msg => {
 						a.refresh = false; //Cool down
 						a.chirp = true; //Reset chirp
-						setTimeout(function(){this.refresh = true;}.bind(a), 10*60*1000);
+						if(a.to === null) a.to = setTimeout(function(){this.refresh = true; this.to = null;}.bind(a), oddsTimer*60*1000);
 					}).catch(err => {
 						console.log(err.name +": "+err.message+" ("+err.code+")");
 						if(err.code ===  50013) a.channel.send("I can't attach images! :(");
@@ -66,6 +67,7 @@ var Viewer = function(ch){
 		channel: ch
 		,refresh: true
 		,chirp: true
+		,to: null
 	}
 }
 
