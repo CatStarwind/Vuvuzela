@@ -186,16 +186,38 @@ vuvu.on("message", message => {
 	}
 
 	if (cmd === "score") {
-		let g = parseInt(args[0]) - 1;
-		if (isNaN(g) || g < 0 || g >= todayGames.length) {
-			message.channel.send("Please select a game! Use v!games to see todays games.");
-			return;
-		}
+		if (args[0] === "start") {
+			let g = parseInt(args[1]) - 1;
+			let v = Viewer(message.channel);
 
-		console.log("Checking Game " + (g + 1) + " Score for #" + message.channel.name + " in [" + message.guild.name + "]");
-		let game = todayGames[g];
-		game.scoreCheck.push(message.channel);
-		if (game.i === null) checkMatch(g);
+			if (isNaN(g) || g < 0 || g >= todayGames.length) {
+				message.channel.send("Please select a game! Use v!games to see todays games.");
+				return;
+			}
+			let game = todayGames[g];
+
+			if (!game.audience.find(v => v.channel.id === message.channel.id)) {
+				console.log("Adding #" + message.channel.name + " in [" + message.guild.name + "] to audience for game " + (g + 1));
+				v.refresh = false; //Turn off odds send
+				game.audience.push(v);
+				console.log(game.audience.length + " now listening.");
+			} else {
+				message.channel.send("You're already tunned in!");
+			}
+			if (game.i === null) game.i = setInterval(game.check.bind(game), 5 * 1000);
+
+		} else {
+			let g = parseInt(args[0]) - 1;
+			if (isNaN(g) || g < 0 || g >= todayGames.length) {
+				message.channel.send("Please select a game! Use v!games to see todays games.");
+				return;
+			}
+
+			console.log("Checking Game " + (g + 1) + " Score for #" + message.channel.name + " in [" + message.guild.name + "]");
+			let game = todayGames[g];
+			game.scoreCheck.push(message.channel);
+			if (game.i === null) checkMatch(g);
+		}
 	}
 
 	if (cmd === "help") {
@@ -205,6 +227,7 @@ vuvu.on("message", message => {
 		helptext += "**v!odds stop [gameid]** - Stop probability messages for selected game.\n";
 		helptext += "**v!odds check [gameid]** - Check probability for selected game.\n";
 		helptext += "**v!score [gameid]** - Check game score.\n";
+		helptext += "**v!score start [gameid]** - Listen for goals in selected game.\n";
 		helptext += "**v!ping** - Pong!";
 		helptext += "```# Don't include the example brackets when using commands!```";
 

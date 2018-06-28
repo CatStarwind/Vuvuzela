@@ -31,9 +31,14 @@ Command | Description
 `v!odds check [gameID]` | Send probability for `gameID`
 
 ### score
-`v!score [gameID]`
+`v!score`
 
-Check game score.
+Start or check goals.
+
+Command | Description
+--- | ---
+`v!score [gameID]` | Check game score
+`v!score start [gameID]` | Listen for goals for `gameID`
 
 ### ping
 `v!ping`
