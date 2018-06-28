@@ -317,7 +317,10 @@ var parseMatch = function(gmatch, g){
 					game.send({ "embed": { 
 						"title": team[i].name.toUpperCase() + " GOOOOOOOOOOOOOL!"
 						,"description": scorebox
-						, "color": parseInt(match.odds[i].color.replace("#", "0x"), 16) 
+						, "color": parseInt(match.odds[i].color.replace("#", "0x"), 16)
+						, "footer": {
+							"icon_url": "https://discordapp.com/assets/e0bbe23c466e33530baf918b9634c4d3.svg"
+							,"text": (minute && minute[0] + (minute[2] ? "+"+minute[2] : "")) + "'" }
 					}});
 				}
 				match.score[i] = score[i];
