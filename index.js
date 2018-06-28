@@ -266,9 +266,9 @@ var checkMatch = function (g) {
 			/*
 			todayGames[g].send("Google killed "+(g+1)+". :( Please restart with `v!odds start "+(g+1)+"`")
 			todayGames[g].stop();
-			console.log("Bad JSON");
-			console.log(e);
+			console.log("Bad JSON");			
 			*/
+			console.log(e);
 		}
 	});
 };
@@ -293,6 +293,7 @@ var parseMatch = function (gmatch, g) {
 		if (country) team.code = country.code.toLowerCase();
 	});
 	var scorebox = (score !== null) ? ":flag_" + team[0].code + ": " + score[0] + " - " + score[1] + " :flag_" + team[1].code + ":" : "";
+	scorebox = scorebox.replace(":flag_en:", "<:flag_en:457123683895607317>"); // Pity
 	var leadColor = match.odds[(score[0] === score[1] ? 2 : (score[0] > score[1] ? 0 : 1))].color;
 
 	// Check if game is over
