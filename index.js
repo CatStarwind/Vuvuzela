@@ -81,7 +81,7 @@ var getGames = function () {
 		var gday = new Date(g.start);
 		if (now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]) {
 			g.match = {
-				"odds": [parseOdd(["TeamA", "#FF0000", "40"]), parseOdd(["TeamB", "#0000FF", "40"]), parseOdd(["Draw", "#777777", "20"])]
+				"odds": [parseOdd(["TeamA", "#FF0000", "40"]), parseOdd(["TeamB", "#0000FF", "40"]), parseOdd(["Draw", "#D6D6D6", "20"])]
 				, "score": [-1, -1]
 			};
 			todayGames.push(Match(g));
@@ -93,6 +93,33 @@ var getGames = function () {
 	var checkon = new Date(now.toJSON().split("T")[0] + " 00:00:00");
 	checkon.setDate(checkon.getDate() + 1);
 	setTimeout(getGames, checkon - now);
+};
+
+var initAudience = function (g, message, odds) {
+	var game = todayGames[g];
+	var viewer = Viewer(message.channel);
+	viewer.refresh = odds;
+
+	if (!game.audience.find(v => v.channel.id === message.channel.id)) {
+		console.log("Adding #" + message.channel.name + " in [" + message.guild.name + "] to audience for game " + (g + 1));
+		game.audience.push(viewer);
+		console.log(game.audience.length + " now listening.");
+	} else {
+		message.channel.send("You're already tunned in!");
+	}
+
+	game.check();
+	if (game.i === null) game.i = setInterval(game.check.bind(game), 5 * 1000);
+};
+
+var parseGameID = function (g, msg) {
+	g = parseInt(g) - 1;
+	if (isNaN(g) || g < 0 || g >= todayGames.length) {
+		msg.channel.send("Please select a game! Use v!games to see todays games.");
+		return -1;
+	} else {
+		return g;
+	}
 };
 
 vuvu.on("ready", function () {
@@ -115,23 +142,11 @@ vuvu.on("message", message => {
 	var cmd = args.shift().toLowerCase();
 
 	if (cmd === "odds") {
-		let g = parseInt(args[1]) - 1;
-		if (isNaN(g) || g < 0 || g >= todayGames.length) {
-			message.channel.send("Please select a game! Use v!games to see todays games.");
-			return;
-		}
+		let g = parseGameID(args[1], message);
+		if (g < 0) return;
 		let game = todayGames[g];
 
-		if (args[0] === "start") {
-			if (!game.audience.find(v => v.channel.id === message.channel.id)) {
-				console.log("Adding #" + message.channel.name + " in [" + message.guild.name + "] to audience for game " + (g + 1));
-				game.audience.push(Viewer(message.channel));
-				console.log(game.audience.length + " now listening.");
-			} else {
-				message.channel.send("You're already tunned in!");
-			}
-			if (game.i === null) game.i = setInterval(game.check.bind(game), 5 * 1000);
-		}
+		if (args[0] === "start") initAudience(g, message, true);
 
 		if (args[0] === "stop") {
 			let i = game.audience.findIndex(v => v.channel.id === message.channel.id);
@@ -164,6 +179,10 @@ vuvu.on("message", message => {
 	if (cmd === "games") {
 		let mids = [];
 		todayGames.forEach(g => mids.push(g.mid));
+		if (!mids.length) {
+			message.channel.send("Sorry! No games found for today.");
+			return;
+		}
 
 		let matchListURL = "https://www.google.com/async/lr_ml?async=sp:2,emids:" + encodeURIComponent(mids.join(";")) + ",mleid:,dlswm:1,iost:-1,ddwe:1,rptoadd:0,vst:fp,inhpt:1,ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
 		request({url: matchListURL, headers: {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function (error, response, body) {
@@ -187,31 +206,12 @@ vuvu.on("message", message => {
 
 	if (cmd === "score") {
 		if (args[0] === "start") {
-			let g = parseInt(args[1]) - 1;
-			let v = Viewer(message.channel);
-
-			if (isNaN(g) || g < 0 || g >= todayGames.length) {
-				message.channel.send("Please select a game! Use v!games to see todays games.");
-				return;
-			}
-			let game = todayGames[g];
-
-			if (!game.audience.find(v => v.channel.id === message.channel.id)) {
-				console.log("Adding #" + message.channel.name + " in [" + message.guild.name + "] to audience for game " + (g + 1));
-				v.refresh = false; //Turn off odds send
-				game.audience.push(v);
-				console.log(game.audience.length + " now listening.");
-			} else {
-				message.channel.send("You're already tunned in!");
-			}
-			if (game.i === null) game.i = setInterval(game.check.bind(game), 5 * 1000);
-
+			let g = parseGameID(args[1], message);
+			if (g < 0) return;
+			initAudience(g, message, true);
 		} else {
-			let g = parseInt(args[0]) - 1;
-			if (isNaN(g) || g < 0 || g >= todayGames.length) {
-				message.channel.send("Please select a game! Use v!games to see todays games.");
-				return;
-			}
+			let g = parseGameID(args[0], message);
+			if (g < 0) return;
 
 			console.log("Checking Game " + (g + 1) + " Score for #" + message.channel.name + " in [" + message.guild.name + "]");
 			let game = todayGames[g];
@@ -266,7 +266,7 @@ var checkMatch = function (g) {
 			/*
 			todayGames[g].send("Google killed "+(g+1)+". :( Please restart with `v!odds start "+(g+1)+"`")
 			todayGames[g].stop();
-			console.log("Bad JSON");			
+			console.log("Bad JSON");
 			*/
 			console.log(e);
 		}
@@ -281,6 +281,8 @@ var parseMatch = function (gmatch, g) {
 	var time = gmatch[1][0][22];
 	var score = gmatch[1][0][24];
 	var odds = gmatch[7][0][2][27][10];
+	match.odds[0].color = gmatch[1][0][1][10];
+	match.odds[1].color = gmatch[1][0][2][10];
 	odds = (odds) ? odds[1] : null; // Stop-gap because Google is getting angry
 	var minute = gmatch[1][0][11]; // 0:Minute
 	// var flag = gmatch[1][0][24][1] //Possible Prediction Closing Flag when set to 2
