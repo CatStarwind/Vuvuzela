@@ -82,7 +82,7 @@ var getGames = function () {
 		if (now.toJSON().split("T")[0] === gday.toJSON().split("T")[0]) {
 			g.match = {
 				"odds": [parseOdd(["TeamA", "#FF0000", "40"]), parseOdd(["TeamB", "#0000FF", "40"]), parseOdd(["Draw", "#D6D6D6", "20"])]
-				, "score": [-1, -1]
+				, "score": []
 			};
 			todayGames.push(Match(g));
 		}
@@ -253,7 +253,8 @@ var checkMatch = function (g) {
 	var matchURL = "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:" + encodeURIComponent(todayGames[g].mid) + ",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
 	/*
 	var fs = require("fs");
-	var json = fs.readFileSync('test.json', 'utf-8');
+	var json = fs.readFileSync("test.json", "utf-8");
+	console.log("Parsing Game " + (g + 1) + " (" + matchURL + ")");
 	parseMatch(JSON.parse(json).match_fullpage, 0);
 	return;
 	*/
@@ -343,20 +344,25 @@ var parseMatch = function (gmatch, g) {
 	// Check for goal
 	if (score !== null) {
 		for (var i = 0; i < match.score.length; i++) {
-			if (match.score[i] !== score[i]) {
-				if (match.score[i] >= 0) {
-					game.send({ "embed": {
-						"title": team[i].name.toUpperCase() + " GOOOOOOOOOOOOOL!"
-						, "description": scorebox
-						, "color": parseInt(match.odds[i].color.replace("#", "0x"), 16)
-						, "footer": {
-							"icon_url": "https://twemoji.maxcdn.com/2/svg/23f1.svg"
-							, "text": (minute && minute[0] + (minute[2] ? "+" + minute[2] : "")) + "'" }
-					}});
-				}
-				match.score[i] = score[i];
+			if (match.score[i] < score[i]) {
+				game.send(new Discord.RichEmbed({
+					"title": team[i].name.toUpperCase() + " GOOOOOOOOOOOOOL!"
+					, "description": scorebox
+					, "color": parseInt(match.odds[i].color.replace("#", "0x"), 16)
+					, "footer": {
+						"icon_url": "https://i.imgur.com/8AgLTkw.png"
+						, "text": (minute && minute[0] + (minute[2] ? "+" + minute[2] : "")) + "'"
+					}
+				}));
+			} else if (match.score[i] > score[i]) {
+				game.send(new Discord.RichEmbed({
+					"title": "I lied"
+					, "description": scorebox
+					, "color": parseInt(leadColor.replace("#", "0x"), 16)
+				}));
 			}
 		}
+		match.score = score;
 	}
 
 	// Ensure odds exist
@@ -397,7 +403,7 @@ var parseMatch = function (gmatch, g) {
 
 				game.sendOdds({ files: [{ attachment: render, name: "winprob.jpg" }] });
 			}
-		} else if (odds[5] === 2) {
+		} else if (odds[5] === 2 && game.audience.find(a => a.refresh)) {
 			game.sendOdds(odds[4]);
 		}
 	}

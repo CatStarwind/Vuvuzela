@@ -12,7 +12,7 @@
         ,"comma-style": ["error", "first"]
         
         ,"block-scoped-var": "warn"
-        ,"complexity": ["warn", 25]
+        ,"complexity": ["warn", 30]
         ,"consistent-return": "warn"
         ,"guard-for-in": "warn"
     }
