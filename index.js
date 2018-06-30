@@ -296,7 +296,7 @@ var parseMatch = function (gmatch, g) {
 	});
 	var scorebox = (score !== null) ? ":flag_" + team[0].code + ": " + score[0] + " - " + score[1] + " :flag_" + team[1].code + ":" : "";
 	scorebox = scorebox.replace(":flag_en:", "<:flag_en:457123683895607317>"); // Pity
-	var leadColor = match.odds[(score[0] === score[1] ? 2 : (score[0] > score[1] ? 0 : 1))].color;
+	var leadColor = (score !== null) ? match.odds[(score[0] === score[1] ? 2 : (score[0] > score[1] ? 0 : 1))].color : "#000000";
 
 	// Check if game is over
 	if (time.length === 3) {
