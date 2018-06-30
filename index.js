@@ -322,14 +322,14 @@ var parseMatch = function (gmatch, g) {
 
 	// Yell Requested Scores
 	if (game.scoreCheck.length) {
-		if (scorebox !== ""){
+		if (scorebox !== "") {
 			game.sendScore({ "embed": {
 				"title": "Score at " + (minute && minute[0] + (minute[2] ? "+" + minute[2] : "")) + "'"
 				, "description": scorebox
 				, "color": parseInt(leadColor.replace("#", "0x"), 16)
 			}});
 		} else {
-			game.sendScore("No score available for " + title + ".")
+			game.sendScore("No score available for " + title + ".");
 		}
 	}
 
