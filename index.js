@@ -350,7 +350,7 @@ var parseMatch = function (gmatch, g) {
 						, "description": scorebox
 						, "color": parseInt(match.odds[i].color.replace("#", "0x"), 16)
 						, "footer": {
-							"icon_url": "https://discordapp.com/assets/e0bbe23c466e33530baf918b9634c4d3.svg"
+							"icon_url": "https://twemoji.maxcdn.com/2/svg/23f1.svg"
 							, "text": (minute && minute[0] + (minute[2] ? "+" + minute[2] : "")) + "'" }
 					}});
 				}
