@@ -44,7 +44,9 @@ var Match = function (game) {
 						a.channel.send(msg).then(function () {
 							a.refresh = false; // Cool down
 							a.chirp = true; // Reset chirp
-							if (a.to === null) a.to = setTimeout(function () { this.refresh = true; this.to = null; }.bind(a), oddsTimer * 60 * 1000);
+							if (a.to === null && !game.oddsClosed) {
+								a.to = setTimeout(function () { this.refresh = true; this.to = null; }.bind(a), oddsTimer * 60 * 1000);
+							}
 						}).catch(err => {
 							console.log(err.name + ": " + err.message + " (" + err.code + ")");
 							if (err.code === 50013) a.channel.send("I can't attach images! :(");
