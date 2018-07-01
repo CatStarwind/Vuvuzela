@@ -286,7 +286,12 @@ var parseMatch = function (gmatch, g) {
 	var title = gmatch[0][0];
 	var time = gmatch[1][0][22];
 	var score = gmatch[1][0][24];
+	var shootOut = gmatch[1][0][21][0];
 	var odds = gmatch[7][0][2][27][10];
+	// var schedule = gmatch[1][0][9]; // 0: Game Start Time, 1: Game End Time
+	var scorebox = "";
+	var leadColor = "#000000";
+	var getLC = function (s) { return match.odds[(s[0] === s[1] ? 2 : (s[0] > s[1] ? 0 : 1))].color; };
 	match.odds[0].color = gmatch[1][0][1][26];
 	match.odds[1].color = gmatch[1][0][2][26];
 	odds = (odds) ? odds[1] : null; // Stop-gap because Google is getting angry
@@ -300,14 +305,20 @@ var parseMatch = function (gmatch, g) {
 		var country = cc.find(c => c.name === team.name);
 		if (country) team.code = country.code.toLowerCase();
 	});
-	var scorebox = (score !== null) ? ":flag_" + team[0].code + ": " + score[0] + " - " + score[1] + " :flag_" + team[1].code + ":" : "";
-	scorebox = scorebox.replace(":flag_en:", "<:flag_en:457123683895607317>"); // Pity
-	var leadColor = (score !== null) ? match.odds[(score[0] === score[1] ? 2 : (score[0] > score[1] ? 0 : 1))].color : "#000000";
+	if (score !== null) {
+		scorebox += ":flag_" + team[0].code + ": ";
+		scorebox += score[0] + (shootOut !== null ? " (" + shootOut[0] + ")" : "");
+		scorebox += " - ";
+		scorebox += score[1] + (shootOut !== null ? " (" + shootOut[1] + ")" : "");
+		scorebox += " :flag_" + team[1].code + ":";
+		scorebox = scorebox.replace(":flag_en:", "<:flag_en:457123683895607317>"); // Pity
+		leadColor = getLC(shootOut || score);
+	}
 
 	// Check if game is over
 	if (time.length === 3) {
 		game.send({ "embed": {
-			"title": "Full-time!"
+			"title": "Full-time!" + (shootOut !== null ? " (PT)" : "")
 			, "description": scorebox
 			, "color": parseInt(leadColor.replace("#", "0x"), 16)
 		}});
@@ -320,6 +331,16 @@ var parseMatch = function (gmatch, g) {
 	if (time[6] === "Half-time") {
 		game.send({ "embed": {
 			"title": "Half-time!"
+			, "description": scorebox
+			, "color": parseInt(leadColor.replace("#", "0x"), 16)
+		}}, true);
+		return;
+	}
+
+	// Check if game is at Extra Time
+	if (time[6] === "End of extra time") {
+		game.send({ "embed": {
+			"title": "End of Extra Time!"
 			, "description": scorebox
 			, "color": parseInt(leadColor.replace("#", "0x"), 16)
 		}}, true);
