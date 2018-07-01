@@ -113,8 +113,10 @@ var initAudience = function (g, message, odds) {
 		message.channel.send("You're already tunned in!");
 	}
 
-	game.check();
-	if (game.i === null) game.i = setInterval(game.check.bind(game), 5 * 1000);
+	if (game.i === null) {
+		game.check();
+		game.i = setInterval(game.check.bind(game), 5 * 1000);
+	}
 };
 
 var parseGameID = function (g, msg) {
