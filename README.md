@@ -22,7 +22,7 @@ Todays Matches Are:
 ### odds
 `v!odds`
 
-Start, stop and check for probablities of a given match of the day. Probablity is sent every 5 minutes.
+Start, stop and check for probablities of a given match of the day. Probablity is sent every 10 minutes.
 
 Command | Description
 --- | ---
