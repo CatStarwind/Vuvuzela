@@ -34,6 +34,11 @@ var Match = function (game) {
 				if (a.refresh) {
 					if (typeof msg === "string") {
 						game.send(msg, true);
+
+						if (game.oddsClosed) {
+							a.refresh = false;
+							a.chirp = true;
+						}
 					} else {
 						console.log("Sending odds to #" + a.channel.name + " in [" + a.channel.guild.name + "]");
 						a.channel.send(msg).then(function () {
@@ -340,6 +345,7 @@ var parseMatch = function (gmatch, g) {
 		game.send("Last Call Prediction for " + title + " Coming Up!");
 		game.oddsClosed = true;
 	}
+	if (minute !== null && minute[0] > 79) game.oddsClosed = true;
 
 	// Check for goal
 	if (score !== null) {
@@ -406,6 +412,9 @@ var parseMatch = function (gmatch, g) {
 		} else if (odds[5] === 2 && game.audience.find(a => a.refresh)) {
 			game.sendOdds(odds[4]);
 		}
+	} else if (game.audience.find(a => a.refresh) && game.oddsClosed) {
+		game.sendOdds("No more odds!");
+		if (game.i !== null) game.send("But will inform of you goals!");
 	}
 };
 
