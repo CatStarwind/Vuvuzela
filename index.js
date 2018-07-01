@@ -341,6 +341,16 @@ var parseMatch = function (gmatch, g) {
 		return;
 	}
 
+	// Check if game is on a break
+	if (time[6] === "Break") {
+		game.send({ "embed": {
+			"title": "Break!"
+			, "description": scorebox
+			, "color": parseInt(leadColor.replace("#", "0x"), 16)
+		}}, true);
+		return;
+	}
+
 	// Check if game is at Extra Time
 	if (time[6] === "End of extra time") {
 		game.send({ "embed": {
