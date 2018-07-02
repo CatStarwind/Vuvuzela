@@ -461,8 +461,8 @@ var parseMatch = function (gmatch, g) {
 			game.sendOdds(odds[4]);
 		}
 	} else if (game.audience.find(a => a.refresh) && game.oddsClosed) {
-		game.sendOdds("No more odds!");
-		if (game.i !== null) game.send("But will inform of you goals!");
+		game.sendOdds("No more odds.");
+		// if (game.i !== null) game.send("But will inform of you goals!");
 	}
 };
 
