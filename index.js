@@ -72,6 +72,13 @@ var Match = function (game) {
 			this.i = null;
 			this.audience = [];
 		}
+		, listAudience: function () {
+			var arrAudience = [];
+			this.audience.forEach(a => {
+				arrAudience.push({"channel": a.channel.name, "server": a.channel.guild.name});
+			});
+			return arrAudience;
+		}
 	};
 };
 var Viewer = function (ch) {
@@ -178,13 +185,15 @@ vuvu.on("message", message => {
 		if (args[0] === "check") {
 			console.log("Checking Game " + (g + 1) + " for #" + message.channel.name + " in [" + message.guild.name + "]");
 			let ch = game.audience.find(v => v.channel.id === message.channel.id);
-			ch ? ch.refresh = true : game.audience.push(Viewer(message.channel));
+			if (ch) {
+				ch.refresh = true;
+			} else {
+				game.audience.push(Viewer(message.channel));
+				if (game.i === null) checkMatch(g);
 
-			if (game.i === null) {
-				checkMatch(g);
-				setTimeout(function () {
-					this.audience.splice(this.audience.findIndex(v => v.channel.id === message.channel.id), 1);
-				}.bind(game), 5 * 1000);
+				setTimeout(function (game, chID) {
+					game.audience.splice(game.audience.findIndex(v => v.channel.id === chID), 1);
+				}, 5 * 1000, game, message.channel.id);
 			}
 		}
 	}
