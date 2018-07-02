@@ -47,6 +47,10 @@ var Match = function (game) {
 							if (a.to === null && !game.oddsClosed) {
 								a.to = setTimeout(function () { this.refresh = true; this.to = null; }.bind(a), oddsTimer * 60 * 1000);
 							}
+							if (game.oddsClosed) {
+								clearTimeout(a.to);
+								a.to = null;
+							}
 						}).catch(err => {
 							console.log(err.name + ": " + err.message + " (" + err.code + ")");
 							if (err.code === 50013) a.channel.send("I can't attach images! :(");
@@ -377,7 +381,7 @@ var parseMatch = function (gmatch, g) {
 	// Last call prediction
 	if (minute !== null && minute[0] === 79 && !game.oddsClosed) {
 		game.audience.forEach(a => { a.refresh = true; });
-		game.send("Last Call Prediction for " + title + " Coming Up!");
+		game.send("Odds closed! Final prediction for " + title + "!");
 		game.oddsClosed = true;
 	}
 	if (minute !== null && minute[0] > 79) game.oddsClosed = true;
