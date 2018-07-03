@@ -18,7 +18,6 @@ Todays Matches Are:
 [2] Team C vs Team D
 ```
 
-
 ### odds
 `v!odds`
 
@@ -39,6 +38,11 @@ Command | Description
 --- | ---
 `v!score [gameID]` | Check game score
 `v!score start [gameID]` | Listen for goals for `gameID`
+
+### formation
+`v!formation [gameID]`
+
+Get formation for selected game.
 
 ### ping
 `v!ping`

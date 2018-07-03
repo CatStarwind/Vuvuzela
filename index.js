@@ -5,6 +5,7 @@ const config = require("./config.json");
 const ggames = require("./ggames.json");
 const cc = require("./countrycodes.json");
 const vuvu = new Discord.Client();
+const requestHeader = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"};
 const oddsTimer = 10; // Minutes
 
 var todayGames = [];
@@ -18,6 +19,9 @@ var Match = function (game) {
 		, audience: []		// Channels to scream at
 		, oddsClosed: false	// Flag for Google closing odds
 		, scoreCheck: []	// Channels requesting scores
+		, matchURL: function () {
+			return "https://www.google.com/async/lr_mt_fp?async=sp:2,emid:" + encodeURIComponent(this.mid) + ",ct:US,hl:en,tz:America%2FLos_Angeles,_fmt:jspb";
+		}
 		, send: function (msg, limit = false) {
 			this.audience.forEach(function (a) {
 				if (!limit || a.chirp) {
@@ -242,6 +246,25 @@ vuvu.on("message", message => {
 		}
 	}
 
+	if (cmd === "formation") {
+		let g = parseGameID(args[0], message);
+		if (g < 0) return;
+
+		request({url: todayGames[g].matchURL(), headers: requestHeader}, function (error, response, body) {
+			if (error) { console.log(error); return; }
+			var gmatch = JSON.parse(body.substring(4)).match_fullpage;
+			var teamA = gmatch[7][0][1][27][8][7][7];
+			var teamB = gmatch[7][0][1][27][8][7][8];
+			var formation = [
+				{"code": cc.find(c => c.name === teamA[0]).code, "f": teamA[1]}
+				, {"code": cc.find(c => c.name === teamB[0]).code, "f": teamB[1]}
+			];
+			var sForm = ":flag_" + formation[0].code + ": " + formation[0].f + "\n" + ":flag_" + formation[1].code + ": " + formation[1].f;
+
+			message.channel.send(sForm.replace(":flag_en:", "<:flag_en:457123683895607317>"));
+		});
+	}
+
 	if (cmd === "help") {
 		let helptext = "```css\nVuvuzela Commands```";
 		helptext += "**v!games** - Displays today's games.\n";
@@ -250,6 +273,7 @@ vuvu.on("message", message => {
 		helptext += "**v!odds check [gameid]** - Check probability for selected game.\n";
 		helptext += "**v!score [gameid]** - Check game score.\n";
 		helptext += "**v!score start [gameid]** - Listen for goals in selected game.\n";
+		helptext += "**v!formation [gameid]** - Retrieve formations for selected game.\n";
 		helptext += "**v!ping** - Pong!";
 		helptext += "```# Don't include the example brackets when using commands!```";
 
@@ -280,7 +304,7 @@ var checkMatch = function (g) {
 	parseMatch(JSON.parse(json).match_fullpage, 0);
 	return;
 	*/
-	request({url: matchURL, headers: {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"}}, function (error, response, body) {
+	request({url: matchURL, headers: requestHeader}, function (error, response, body) {
 		if (error) { console.log(error); return; }
 		try {
 			console.log("Parsing Game " + (g + 1) + " (" + matchURL + ")");
@@ -320,7 +344,7 @@ var parseMatch = function (gmatch, g) {
 	];
 	team.forEach(team => {
 		var country = cc.find(c => c.name === team.name);
-		if (country) team.code = country.code.toLowerCase();
+		if (country) team.code = country.code;
 	});
 	if (score !== null) {
 		scorebox += ":flag_" + team[0].code + ": ";
