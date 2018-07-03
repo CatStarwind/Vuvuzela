@@ -388,12 +388,12 @@ var parseMatch = function (gmatch, g) {
 	}
 
 	// Last call prediction
-	if (minute !== null && minute[0] === 79 && !game.oddsClosed) {
+	if (minute !== null && minute[0] === 80 && !game.oddsClosed) {
 		game.audience.forEach(a => { a.refresh = true; });
 		game.send("Odds closed! Final prediction for " + title + "!");
 		game.oddsClosed = true;
 	}
-	if (minute !== null && minute[0] > 79) game.oddsClosed = true;
+	if (minute !== null && minute[0] > 80) game.oddsClosed = true;
 
 	// Check for goal
 	if (score !== null) {
