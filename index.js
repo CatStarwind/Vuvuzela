@@ -256,6 +256,10 @@ vuvu.on("message", message => {
 			var gmatch = JSON.parse(body.substring(4)).match_fullpage;
 			var teamA = gmatch[7][0][1][27][8][7][7];
 			var teamB = gmatch[7][0][1][27][8][7][8];
+			if (teamA || teamB) {
+				message.channel.send("No formation information available.");
+				return;
+			}
 			var formation = [
 				{"code": cc.find(c => c.name === teamA[0]).code, "f": teamA[1]}
 				, {"code": cc.find(c => c.name === teamB[0]).code, "f": teamB[1]}
@@ -338,11 +342,15 @@ var parseMatch = function (gmatch, g) {
 	var time = gmatch[1][0][22];
 	var score = gmatch[1][0][24];
 	// var flag = gmatch[1][0][24][1] //Possible Prediction Closing Flag when set to 2
-	var odds = gmatch[7][0][2][27][10];	
+	var lineup = [
+		gmatch[7][0][1][27][8][7][7]
+		, gmatch[7][0][1][27][8][7][7]
+	];
+	var odds = gmatch[7][0][2][27][10];
 	var scorebox = "";
 	var leadColor = "#000000";
-	var getLC = function (s) { return match.odds[(s[0] === s[1] ? 2 : (s[0] > s[1] ? 0 : 1))].color; };	
-	odds = (odds) ? odds[1] : null; // Stop-gap because Google is getting angry	
+	var getLC = function (s) { return match.odds[(s[0] === s[1] ? 2 : (s[0] > s[1] ? 0 : 1))].color; };
+	odds = (odds) ? odds[1] : null; // Stop-gap because Google is getting angry
 	team.forEach(team => {
 		var country = cc.find(c => c.name === team.name);
 		if (country) team.code = country.code;
@@ -397,6 +405,19 @@ var parseMatch = function (gmatch, g) {
 			, "color": parseInt(leadColor.replace("#", "0x"), 16)
 		}}, true);
 		return;
+	}
+
+	if (minute !== null && minute[0] === 0) {
+		let formation = [
+			{"code": cc.find(c => c.name === lineup[0][0]).code, "f": lineup[0][1]}
+			, {"code": cc.find(c => c.name === lineup[1][0]).code, "f": lineup[1][1]}
+		];
+		let sForm = ":flag_" + formation[0].code + ": " + formation[0].f + "\n" + ":flag_" + formation[1].code + ": " + formation[1].f;
+		game.send({ "embed": {
+			"title": "Kick off!"
+			, "description": sForm.replace(":flag_en:", "<:flag_en:457123683895607317>")
+			, "color": parseInt(leadColor.replace("#", "0x"), 16)
+		}}, true);
 	}
 
 	// Yell Requested Scores
