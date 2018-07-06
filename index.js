@@ -254,12 +254,12 @@ vuvu.on("message", message => {
 		request({url: todayGames[g].matchURL(), headers: requestHeader}, function (error, response, body) {
 			if (error) { console.log(error); return; }
 			var gmatch = JSON.parse(body.substring(4)).match_fullpage;
-			var teamA = gmatch[7][0][1][27][8][7][7];
-			var teamB = gmatch[7][0][1][27][8][7][8];
-			if (teamA || teamB) {
+			if(gmatch[7][0][1][27][8][7][0] === 0) {
 				message.channel.send("No formation information available.");
 				return;
 			}
+			var teamA = gmatch[7][0][1][27][8][7][7];
+			var teamB = gmatch[7][0][1][27][8][7][8];
 			var formation = [
 				{"code": cc.find(c => c.name === teamA[0]).code, "f": teamA[1]}
 				, {"code": cc.find(c => c.name === teamB[0]).code, "f": teamB[1]}
@@ -344,7 +344,7 @@ var parseMatch = function (gmatch, g) {
 	// var flag = gmatch[1][0][24][1] //Possible Prediction Closing Flag when set to 2
 	var lineup = [
 		gmatch[7][0][1][27][8][7][7]
-		, gmatch[7][0][1][27][8][7][7]
+		, gmatch[7][0][1][27][8][7][8]
 	];
 	var odds = gmatch[7][0][2][27][10];
 	var scorebox = "";
