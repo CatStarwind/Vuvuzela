@@ -250,6 +250,7 @@ vuvu.on("message", message => {
 		let g = parseGameID(args[0], message);
 		if (g < 0) return;
 
+		console.log("Checking formation for Game " + (g + 1) + " for #" + message.channel.name + " in [" + message.guild.name + "]");
 		request({url: todayGames[g].matchURL(), headers: requestHeader}, function (error, response, body) {
 			if (error) { console.log(error); return; }
 			var gmatch = JSON.parse(body.substring(4)).match_fullpage;
@@ -325,23 +326,23 @@ var parseMatch = function (gmatch, g) {
 	var game = todayGames[g];
 	var match = game.match;
 	var title = gmatch[0][0];
-	var time = gmatch[1][0][22];
-	var score = gmatch[1][0][24];
-	var shootOut = gmatch[1][0][21][0];
-	var odds = gmatch[7][0][2][27][10];
-	// var schedule = gmatch[1][0][9]; // 0: Game Start Time, 1: Game End Time
-	var scorebox = "";
-	var leadColor = "#000000";
-	var getLC = function (s) { return match.odds[(s[0] === s[1] ? 2 : (s[0] > s[1] ? 0 : 1))].color; };
-	match.odds[0].color = gmatch[1][0][1][26];
-	match.odds[1].color = gmatch[1][0][2][26];
-	odds = (odds) ? odds[1] : null; // Stop-gap because Google is getting angry
-	var minute = gmatch[1][0][11]; // 0:Minute
-	// var flag = gmatch[1][0][24][1] //Possible Prediction Closing Flag when set to 2
 	var team = [
 		{name: gmatch[1][0][1][0][1], abv: gmatch[1][0][1][0][2], code: "white"}
 		, {name: gmatch[1][0][2][0][1], abv: gmatch[1][0][2][0][2], code: "white"}
 	];
+	match.odds[0].color = gmatch[1][0][1][26];
+	match.odds[1].color = gmatch[1][0][2][26];
+	// var schedule = gmatch[1][0][9]; // 0: Game Start Time, 1: Game End Time
+	var minute = gmatch[1][0][11]; // 0:Minute
+	var shootOut = gmatch[1][0][21][0];
+	var time = gmatch[1][0][22];
+	var score = gmatch[1][0][24];
+	// var flag = gmatch[1][0][24][1] //Possible Prediction Closing Flag when set to 2
+	var odds = gmatch[7][0][2][27][10];	
+	var scorebox = "";
+	var leadColor = "#000000";
+	var getLC = function (s) { return match.odds[(s[0] === s[1] ? 2 : (s[0] > s[1] ? 0 : 1))].color; };	
+	odds = (odds) ? odds[1] : null; // Stop-gap because Google is getting angry	
 	team.forEach(team => {
 		var country = cc.find(c => c.name === team.name);
 		if (country) team.code = country.code;
