@@ -254,7 +254,7 @@ vuvu.on("message", message => {
 		request({url: todayGames[g].matchURL(), headers: requestHeader}, function (error, response, body) {
 			if (error) { console.log(error); return; }
 			var gmatch = JSON.parse(body.substring(4)).match_fullpage;
-			if(gmatch[7][0][1][27][8][7][0] === 0) {
+			if (gmatch[7][0][1][27][8][7][0] === 0) {
 				message.channel.send("No formation information available.");
 				return;
 			}
@@ -407,7 +407,7 @@ var parseMatch = function (gmatch, g) {
 		return;
 	}
 
-	if (minute !== null && minute[0] === 0) {
+	if (minute !== null && minute[0] === 1) {
 		let formation = [
 			{"code": cc.find(c => c.name === lineup[0][0]).code, "f": lineup[0][1]}
 			, {"code": cc.find(c => c.name === lineup[1][0]).code, "f": lineup[1][1]}
